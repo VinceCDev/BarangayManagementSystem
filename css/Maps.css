@@ -1,0 +1,752 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    color: #ededed;
+    background-size: cover;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    display: flex;
+    background: rgba(255, 255, 255, 0.9); 
+    align-items: center;
+    padding: 20px;
+    justify-content: space-between;
+    transition: backdrop-filter 0.3s ease; 
+    backdrop-filter: blur(8px);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none; 
+    color: black; 
+    font-weight: 600; 
+    font-size: 25px; 
+    cursor: default; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards;
+}
+
+.logo img {
+    margin-left: 30px; 
+}
+
+.logo h2{
+    margin-left: 30px;
+}
+
+.hamburger {
+    display: none;
+}
+
+.navigation {
+    margin-right: 25px;
+}
+
+.navigation a {
+    display: inline-block;
+    color: #000;
+    font-size: 25px;
+    margin-left: 35px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: 0.5s;
+    opacity: 0; 
+    margin-right: 15px;
+    animation: slideTop .5s ease forwards;
+    animation-delay: calc(.2s * var(--i));
+}
+
+.navigation a:hover {
+    color: white;
+    background-color: #00aaff;
+    padding: 12px;
+    border-radius: 30px;
+}
+
+.before-line {
+    position: relative;
+    padding-left: 90px;
+    font-size: 20px;
+  }
+  .before-line:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 10%;
+    height: 3px;
+    background-color: #00aaff; 
+    z-index: -1;
+  }
+
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .dropdown button {
+    display: inline-block;
+    color: #000;
+    font-size: 25px;
+    margin-left: 35px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: 0.5s;
+    opacity: 1;
+    margin-right: 15px;
+    animation: slideTop .5s ease forwards;
+    animation-delay: calc(.2s * var(--i));
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .dropdown button i{
+    color: #000;
+    font-size: 15px;
+  }
+
+  .dropdown button:hover{
+    color: white;
+    background-color: #00aaff;
+    padding: 12px;
+    border-radius: 30px;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    top: 100%;
+    left: 0; 
+    color: #fff;
+    margin-left: 30px;
+    text-align: center;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 8px;
+    border-top: 4px solid #00aaff;
+  }
+
+  .dropdown-content a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    font-size: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 20px;
+  }
+
+  .dropdown-content a:hover {
+    background-color: #F4B400;
+    color: #000;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+.location {
+    width: 95%;
+    height: 85vh;
+    position: relative;
+    justify-content: center; 
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    padding: 70px 10% 0;
+    align-items: center;
+    background-color: #00aaff;
+    border-radius: 20px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    margin-top: 120px; 
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.location h3 {
+    font-size: 40px;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute;
+    top: 50px; 
+    transform: translateX(-50%);
+    text-align: center;
+    justify-content: center;
+}
+
+.location p {
+    width: 500px;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 110px; 
+    left: 50%;
+    transform: translateX(-50%); 
+    text-align: center;
+    margin-left: -265px;
+    font-size: 18px;
+}
+
+.location hr {
+    width: 800px;
+    margin: 0 auto;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute;
+    top: 150px;
+    transform: translateX(-50%);
+    text-align: center;
+    font-weight: bold;
+}
+
+#map {
+    height: 400px;
+    width: 80%;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    margin-top: 30px;
+    z-index: 1;
+    animation: slideRight 1s ease forwards;
+}
+
+.land-area {
+    width: 95%;
+    height: 45vh;
+    position: relative;
+    justify-content: center; 
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    padding: 70px 10% 0;
+    align-items: center;
+    border-radius: 20px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    margin-top: 40px; 
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.land-area h3 {
+    font-size: 40px;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 50px;
+    transform: translateX(-50%); 
+    text-align: center;
+    justify-content: center;
+    margin-top: -45px;
+}
+
+.land-area p {
+    width: 500px;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: slideRight 1s ease forwards;
+    position: absolute; 
+    top: 70px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    text-align: center;
+    margin-left: -265px; 
+    font-size: 18px;
+}
+
+.land-area hr {
+    width: 1200px;
+    margin: 0 auto;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 120px; 
+    transform: translateX(-50%);
+    text-align: center; 
+    font-weight: bold;
+}
+
+.land-area table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+}
+.land-area th, .land-area td {
+    padding: 8px;
+    text-align: left;
+    border: 3px solid #000;
+    text-align: center;
+}
+
+.land-area th {
+    font-size: 27px !important;
+    font-weight: bold;
+    background-color: #00aaff;
+    color: #000; 
+}
+
+.land-area td{
+    font-size: 20px;
+}
+.land-area tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.land-use {
+    width: 95%;
+    height: 40vh;
+    position: relative;
+    justify-content: center; 
+    background-size: cover;
+    background-position: center;
+    background-color: #00aaff;
+    display: flex;
+    padding: 70px 10% 0;
+    align-items: center;
+    border-radius: 20px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    margin-top: -30px; 
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.land-use h3 {
+    font-size: 40px;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 50px; 
+    transform: translateX(-50%); 
+    text-align: center;
+    justify-content: center;
+    margin-top: -30px;
+}
+
+.land-use p {
+    width: 500px;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 85px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    text-align: center;
+    margin-left: -265px; 
+    font-size: 18px;
+}
+
+.land-use hr {
+    width: 1200px;
+    margin: 0 auto;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 135px; 
+    transform: translateX(-50%); 
+    text-align: center; 
+    font-weight: bold;
+}
+
+.land-use table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    margin-top: 60px;
+}
+.land-use th, .land-use td {
+    padding: 8px;
+    text-align: left;
+    border: 3px solid #000;
+    text-align: center;
+}
+
+.land-use th {
+    font-size: 27px !important;
+    font-weight: bold;
+    background-color: #fff;
+    color: #000; 
+}
+
+.land-use td{
+    font-size: 20px;
+}
+.land-use tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#map {
+    display: flex;
+    box-shadow: none;
+}
+
+.location {
+    width: 50%;
+    height: 73vh;
+    position: relative;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    padding: 70px 10% 0;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 20px;
+    margin-top: 120px;
+    margin-bottom: 20px;
+    text-align: center;
+    margin-left: -120px;
+}
+
+.location h3 {
+    font-size: 40px;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: slideRight 1s ease forwards;
+    position: absolute;
+    top: 50px;
+    transform: translateX(-50%);
+    text-align: center;
+    justify-content: center;
+}
+
+.location p {
+    width: 500px;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: slideRight 1s ease forwards;
+    position: absolute;
+    top: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    margin-left: -265px;
+    font-size: 18px;
+}
+
+.location hr {
+    width: 650px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: slideRight 1s ease forwards;
+    position: absolute;
+    top: 150px;
+    transform: translateX(-50%);
+    text-align: center;
+    font-weight: bold;
+}
+
+.land {
+    width: 50%;
+    height: 80vh;
+    margin-right: -200px;
+}
+
+.land-area,
+.land-use {
+    width: 90%;
+    height: 37vh;
+}
+
+.land-area {
+    margin-top: 115px;
+}
+
+.land-use {
+    margin-top: -30px;
+    background-color: #fff;
+}
+
+.land-area hr,
+.land-use hr {
+    width: 600px;
+}
+
+.land-area table {
+    margin-top: 25px;
+}
+
+.map {
+    height: 50vh;
+    margin-top: -40px;
+}
+
+iframe {
+    margin: 0 auto;
+    margin-top: -100px;
+}
+
+footer {
+    background-color: black;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    font-size: 24px;
+    margin-top: 300px;
+    opacity: 0;
+    animation: slideTop .5s ease forwards;
+    height: 70px;
+}
+
+@keyframes slideRight {
+    0% {
+        transform: translateX(-100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateX(0px);
+        opacity: 1;
+    }
+}
+
+@keyframes slideLeft {
+    0% {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateX(0px);
+        opacity: 1;
+    }
+}
+
+@keyframes slideTop {
+    0% {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateY(0px);
+        opacity: 1;
+    }
+}
+
+@keyframes slideBottom {
+    0% {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateY(0px);
+        opacity: 1;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .header {
+        padding: 20px 30px;
+    }
+
+    .header .logo {
+        margin-left: -40px;
+        color: #000;
+        width: 160%;
+    }
+
+    .header .logo h2 {
+        margin-left: 10px;
+        margin-top: 5px;
+        font-size: 23px;
+    }
+
+    .navigation {
+        background-color: white;
+        top: 0;
+        display: block;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        transition: left 0.5s ease, opacity 0.5s ease;
+        backdrop-filter: blur(5px);
+        color: black;
+        opacity: 0;
+        position: absolute;
+        width: 60%;
+        text-align: center;
+        left: 0;
+        height: 900px;
+        padding-top: 110px;
+    }
+
+    .navigation.active {
+        opacity: 1;
+        z-index: 1;
+    }
+
+    .navigation a {
+        margin: 10px 0;
+        display: block;
+        margin: 0 auto;
+        color: black;
+        font-size: 28px;
+        margin-bottom: 25px;
+        transition: width 0.5s ease;
+    }
+
+    .navigation a:hover {
+        width: 50%;
+    }
+
+    .navigation button {
+        margin: 10px 0;
+        margin: 0 auto;
+        font-size: 25px;
+        margin-bottom: 20px;
+    }
+
+    .hamburger {
+        margin-left: 320px;
+        top: 45px;
+        left: -10px;
+        z-index: 101;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 30px;
+        height: 20px;
+        background-color: transparent;
+        border: none;
+        position: fixed;
+    }
+
+    .hamburger .bar {
+        width: 100%;
+        height: 3px;
+        background-color: #00aaff;
+        transition: all 0.3s ease;
+    }
+
+    .hamburger.active .bar:nth-child(2) {
+        opacity: 0;
+    }
+
+    .hamburger.active .bar:first-child {
+        transform: translateY(8px) rotate(45deg);
+    }
+
+    .hamburger.active .bar:last-child {
+        transform: translateY(-8px) rotate(-45deg);
+    }
+
+    .dropdown-content {
+        margin: 0 auto;
+        width: 100%;
+        height: 270px;
+        padding-top: 20px;
+    }
+
+    .dropdown-content a {
+        color: white;
+        font-size: 19px;
+    }
+
+    #map {
+        display: block;
+        margin-top: 150px;
+        box-shadow: none;
+    }
+
+    .location {
+        margin: 0 auto;
+        margin-top: -30px;
+    }
+
+    .map {
+        margin: 0 auto;
+    }
+
+    iframe {
+        width: 300px;
+        margin: 0 auto;
+        height: 500px;
+        margin-top: -100px;
+    }
+
+    .land {
+        margin: 0 auto;
+        margin-top: -50px;
+        width: 100%;
+    }
+
+    .land-area {
+        width: 100%;
+        margin-top: 50px;
+    }
+
+    .land-area h3,
+    .land-use h3 {
+        font-size: 35px;
+    }
+
+    .land-area p,
+    .land-use p {
+        font-size: 18px;
+        width: 90%;
+        margin: 0 auto;
+        left: 0;
+        right: 0;
+        margin-top: -15px;
+    }
+
+    .land-area hr,
+    .land-use hr {
+        width: 100%;
+    }
+
+    .land-area table,
+    .land-use table {
+        margin-top: 60px;
+    }
+
+    .land-area table th,
+    td {
+        width: 500px;
+    }
+
+    .land-use table th,
+    td {
+        width: 500px;
+    }
+
+    .land-use {
+        margin-top: -25px;
+        width: 100%;
+    }
+    
+    footer {
+    margin-top: 800px;
+    font-size: 18px;
+    margin-bottom:0;
+    }
+}
