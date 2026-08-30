@@ -582,7 +582,11 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
     background: linear-gradient(140deg, rgba(28, 95, 214, .30), rgba(28, 95, 214, .04));
     box-shadow: -8vw 40vh 0 -6vw rgba(11, 47, 110, .16);
 }
-.auth-page > * { position: relative; z-index: 1; }
+/* Everything the page owns sits above the ::before / ::after art — but NOT
+   SweetAlert2's container, which is appended to <body> and must stay a
+   viewport-fixed overlay (otherwise the flex body lays it out beside the
+   card, as a panel on the right). */
+.auth-page > *:not(.swal2-container) { position: relative; z-index: 1; }
 
 .auth-shell {
     width: min(940px, 100%);
@@ -776,3 +780,40 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .divide-y > * + * { border-top: 1px solid var(--line); }
 .hover-lift { transition: transform .12s ease, box-shadow .12s ease; }
 .hover-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* 9. ─────────────────────────────────────────────  SWEETALERT2  ───────── */
+/*  SweetAlert2 injects its own stylesheet at the TOP of <head>, so app.css
+ *  (loaded after) wins ties. Two things to keep it a proper centred modal
+ *  and on-brand:                                                           */
+
+/*  a) Always a viewport-fixed, full-screen overlay — never laid out in the
+ *     page flow (this is what pushed the dialog to the side on the auth
+ *     screens, where <body> is a flex container).                          */
+.swal2-container {
+    position: fixed !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+    z-index: 20000 !important;
+}
+.swal2-container.swal2-backdrop-show { background: rgba(11, 32, 74, .45); }
+
+/*  b) On-brand look. SweetAlert2 v11 colours its buttons from CSS custom
+ *     properties, so we set the DEFAULTS here. A dialog that passes
+ *     confirmButtonColor (the red delete / sign-out confirms) overrides the
+ *     same property inline on the button, so those stay red.               */
+.swal2-popup {
+    --swal2-confirm-button-background-color: var(--brand-500);
+    --swal2-cancel-button-background-color: #64748b;
+    --swal2-deny-button-background-color: var(--danger);
+    --swal2-border-radius: 18px;
+    padding: 1.75rem 1.75rem 1.5rem;
+    font-family: var(--font);
+    box-shadow: 0 30px 70px rgba(11, 32, 74, .32);
+}
+.swal2-title         { color: var(--ink); font-weight: 650; font-size: 1.35rem; }
+.swal2-html-container { color: var(--muted); }
+.swal2-actions       { gap: .5rem; }
+.swal2-styled        { border-radius: 11px; padding: .6rem 1.4rem; font-weight: 600; box-shadow: none; }

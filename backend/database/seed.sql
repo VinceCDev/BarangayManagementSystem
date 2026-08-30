@@ -17,12 +17,21 @@ USE `barangay_management_system`;
 
 
 -- ----------------------------------------------------------------------------
---  Admin account. The password below is a bcrypt hash of "Admin@123"
---  produced with PHP password_hash(). The app verifies it with password_verify().
+--  Starter accounts — one per role. Every password below is a bcrypt hash of
+--  "Admin@123" (PHP password_hash(); verified with password_verify()).
+--  CHANGE THESE after the first login.
 -- ----------------------------------------------------------------------------
 INSERT INTO `users` (`id`, `fullName`, `userName`, `password`, `userType`) VALUES
     (1, 'System Administrator', 'admin@barangay.gov.ph',
-     '$2y$10$8dwxAIpKnF.fwGXPb1EcM.kjkq82rPY4jBbWVayrU3Jp.Q8L4GSbS', 'admin')
+     '$2y$10$8dwxAIpKnF.fwGXPb1EcM.kjkq82rPY4jBbWVayrU3Jp.Q8L4GSbS', 'admin'),
+    (2, 'Barangay Official', 'official@barangay.gov.ph',
+     '$2y$10$gBYVm.D53Szg46EBqX2ZzOkN7qI2QzNlNFHN0HxEPFF2RX9Ijht4C', 'official'),
+    (3, 'SK Chairman', 'sk@barangay.gov.ph',
+     '$2y$10$gBYVm.D53Szg46EBqX2ZzOkN7qI2QzNlNFHN0HxEPFF2RX9Ijht4C', 'sk_chairman'),
+    (4, 'Barangay Treasurer', 'treasurer@barangay.gov.ph',
+     '$2y$10$gBYVm.D53Szg46EBqX2ZzOkN7qI2QzNlNFHN0HxEPFF2RX9Ijht4C', 'treasurer'),
+    (5, 'Resident Account', 'resident@barangay.gov.ph',
+     '$2y$10$gBYVm.D53Szg46EBqX2ZzOkN7qI2QzNlNFHN0HxEPFF2RX9Ijht4C', 'resident')
 ON DUPLICATE KEY UPDATE `fullName` = VALUES(`fullName`), `userType` = VALUES(`userType`);
 
 
@@ -32,7 +41,11 @@ ON DUPLICATE KEY UPDATE `fullName` = VALUES(`fullName`), `userType` = VALUES(`us
 INSERT INTO `profiledata`
     (`id`, `firstname`, `middlename`, `lastname`, `gender`, `birthdate`, `email`, `contact`, `religion`, `status`, `emergency_person`, `emergency_contact`)
 VALUES
-    (1, 'System', '', 'Administrator', 'Male', '1990-01-01', 'admin@barangay.gov.ph', '09000000000', 'N/A', 'Single', 'N/A', '09000000000')
+    (1, 'System',    '', 'Administrator', 'Male', '1990-01-01', 'admin@barangay.gov.ph',     '09000000000', 'N/A', 'Single', 'N/A', '09000000000'),
+    (2, 'Barangay',  '', 'Official',      'Male', '1985-01-01', 'official@barangay.gov.ph',  '09000000002', 'N/A', 'Single', 'N/A', '09000000000'),
+    (3, 'SK',        '', 'Chairman',      'Male', '1998-01-01', 'sk@barangay.gov.ph',        '09000000003', 'N/A', 'Single', 'N/A', '09000000000'),
+    (4, 'Barangay',  '', 'Treasurer',     'Female', '1987-01-01', 'treasurer@barangay.gov.ph', '09000000004', 'N/A', 'Single', 'N/A', '09000000000'),
+    (5, 'Resident',  '', 'Account',       'Male', '1995-01-01', 'resident@barangay.gov.ph',  '09000000005', 'N/A', 'Single', 'N/A', '09000000000')
 ON DUPLICATE KEY UPDATE `firstname` = VALUES(`firstname`);
 
 INSERT INTO `importantinfo`
