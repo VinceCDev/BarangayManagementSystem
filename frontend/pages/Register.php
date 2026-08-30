@@ -137,6 +137,14 @@ function regShow(n) {
 }
 function regBack() { regShow(1); }
 
+// Enter inside a step-1 field should advance, not try to submit the form
+// (submitting would silently fail on the hidden required password field).
+regForm.querySelectorAll('.reg-step[data-step="1"] input').forEach(function (i) {
+    i.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); regNext(); }
+    });
+});
+
 function regNext() {
     // validate only the visible step-1 fields
     const step1 = regForm.querySelector('.reg-step[data-step="1"]');

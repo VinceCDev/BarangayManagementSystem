@@ -186,7 +186,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--sp-5) 0; opacit
     display: flex; align-items: center; gap: var(--sp-4);
     padding: 0 var(--sp-5);
     background: rgba(255, 255, 255, .85);
-    backdrop-filter: saturate(1.4) blur(8px);
+    -webkit-backdrop-filter: saturate(1.4) blur(8px); backdrop-filter: saturate(1.4) blur(8px);
     border-bottom: 1px solid var(--line);
 }
 .app-topbar__title { font-weight: 650; font-size: 1rem; color: var(--ink); }
@@ -486,7 +486,7 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .site-nav {
     position: sticky; top: 0; z-index: 1030;
     background: rgba(255, 255, 255, .92);
-    backdrop-filter: saturate(1.5) blur(10px);
+    -webkit-backdrop-filter: saturate(1.5) blur(10px); backdrop-filter: saturate(1.5) blur(10px);
     border-bottom: 1px solid var(--line);
     box-shadow: 0 1px 0 rgba(16, 32, 44, .03);
 }
@@ -607,6 +607,11 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .auth-shell--wide .auth-form { justify-content: flex-start; }
 .auth-form .row .field { margin-bottom: 0; }        /* grid gap handles spacing */
 .auth-form .row .form-label { margin-top: 0; }
+/* Bootstrap .row uses negative side margins that expect a padded .container
+   parent; here .row sits straight inside the padded .auth-form, so zero them
+   out (column padding still supplies the gutter) to stop horizontal overflow
+   on narrow screens. */
+.auth-form .row { margin-left: 0; margin-right: 0; }
 
 /* --- Sign-up 2-step wizard --- */
 .reg-steps {
