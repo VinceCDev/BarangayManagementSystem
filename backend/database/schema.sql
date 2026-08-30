@@ -147,6 +147,7 @@ CREATE TABLE IF NOT EXISTS `certificates` (
     `certificate_name` VARCHAR(150) NOT NULL,
     `requirements`     TEXT         DEFAULT NULL,
     `file`             VARCHAR(255) DEFAULT NULL COMMENT 'PDF template file name inside /upload/uploads',
+    `created_at`       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_certificates_name` (`certificate_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

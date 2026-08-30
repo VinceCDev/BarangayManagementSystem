@@ -1,550 +1,169 @@
 <?php
-  session_start();
+/**
+ * Forms.php — certificate / clearance templates (list + add + edit + delete).
+ * Add  -> backend/actions/forms_insert.php   (multipart: certificate, requirements, file)
+ * Edit -> backend/actions/forms_update.php   (hidden forms_id)
+ * Delete -> backend/actions/forms_delete.php (POST delete_id)
+ */
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();
 
-  if (!isset($_SESSION['username'])) {
-      header("Location: Login.php");
-      exit;
-  }
+$pdo = db();
 
-  if (isset($_GET['logout'])) {
-      session_destroy();
+$search  = trim($_GET['search'] ?? '');
+$perPage = 10;
+$page    = max(1, (int) ($_GET['page'] ?? 1));
+$offset  = ($page - 1) * $perPage;
+$like    = '%' . $search . '%';
 
-      header("Location: Login.php");
-      exit;
-  }
+$st = $pdo->prepare('SELECT COUNT(*) FROM certificates WHERE certificate_name LIKE ?');
+$st->execute([$like]);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+
+$st = $pdo->prepare('SELECT * FROM certificates WHERE certificate_name LIKE ? ORDER BY certificate_name LIMIT ? OFFSET ?');
+$st->bindValue(1, $like);
+$st->bindValue(2, $perPage, PDO::PARAM_INT);
+$st->bindValue(3, $offset, PDO::PARAM_INT);
+$st->execute();
+$rows = $st->fetchAll();
+
+$page_title    = 'Certificates';
+$page_heading  = 'Certificate Templates';
+$page_subtitle = $total . ' template' . ($total === 1 ? '' : 's');
+$active_nav    = 'forms';
+$page_actions  = '<button class="btn btn-primary" onclick="openForm()"><i class="bi bi-plus-lg me-1"></i>Add Template</button>';
+
+require __DIR__ . '/../partials/admin_top.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Forms</title>
-  <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/Forms.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
-</head>
-<body class="admin">
-  <div>
-    <div class="header">
-      <div class="picfetch">
-        <?php
-            require __DIR__ . '/../../connection.php';
 
-              $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $picture = $row["picture"];
-            } else {
-                $picture = "";
-            }
-                
-              $sql = "SELECT * FROM profiledata WHERE email = ?";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              $firstname = $row["firstname"];
-              $middlename = $row["middlename"];
-              $lastname = $row["lastname"];
-            } else {
-              $firstname = "";
-              $middlename = "";
-              $lastname = "";
-            }
-
-            $stmt->close();
-            $conn->close();
-          ?>
-
-          <img src="<?php echo $picture; ?>" width="80px" height="80px" onerror="this.style.display='none';">
-          <p class="p"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-      </div>
-      <i class="fas fa-bars hamburger" onclick="toggleNavigation()" style="display: none;"></i>
-      <div class="profile-icon" onclick="toggleProfileDetails()">
-          <i class="fas fa-user"></i>
-          <div class="profile-details-container" id="profileDetailsContainer">
-              <div class="profile">
-              <?php
-                require __DIR__ . '/../../connection.php';
-
-                $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $picture = $row["picture"];
-                } else {
-                    $picture = "";
-                }
-
-                $sql = "SELECT * FROM profiledata WHERE email = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $firstname = $row["firstname"];
-                    $middlename = $row["middlename"];
-                    $lastname = $row["lastname"];
-                } else {
-                    $firstname = "";
-                    $middlename = "";
-                    $lastname = "";
-                }
-
-                $sql = "SELECT * FROM users WHERE userName = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $userType = $row["userType"];
-                } else {
-                    $userType = "";
-                }
-
-                $stmt->close();
-                $conn->close();
-                ?>
-                <img src="<?php echo $picture; ?>" alt="Barangay Hall of Paule 1" width="80px" height="80px">
-                <div class="adminname">
-                  <p class="p1"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-                  <p class="p2"><?php echo $userType; ?></p>
-                </div>
-              </div>
-              <hr>
-              <a href="UserProfile.php"><i class="bi bi-person"></i> Profile</a>
-              <a href="ForgotPassword.php"><i class="bi bi-key"></i> Reset Password</a>
-              <hr>
-              <a href="#" onclick="confirmLogout()"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-          </div>
-      </div>
-    </div>
-    <div class="navigation" id="navigation">
-      <div class="logo">
-        <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Barangay Logo" height="40px" width="40px">
-        <p>Barangay Records</p>
-      </div>
-      <div class="administrators">
-        <p><em> Administrator</em></p>
-      </div>
-      <a href="AdminDashboard.php" class="a1"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      <a href="BarangayOfficial.php" class="a1"><i class="fas fa-users"></i> Barangay Officials</a>
-      <a href="Blotter.php" class="a1"><i class="fas fa-book"></i> Blotter</a>
-      <a href="Resident.php" class="a1"><i class="fas fa-users"></i> Residents</a>
-      <a href="DocumentRequest.php" class="a1" id="requests"><i class="fas fa-file"></i> Document Requests</a>
-      <a href="Users.php" class="a1"><i class="fas fa-users-cog"></i> Users</a>
-      <a href="Activity.php" class="a1"><i class="bi bi-activity"></i> Activity</a>
-      <div class="dropdown" onclick="toggleDropdown()">
-        <button class="btn btn-primary plus-toggle" type="button" id="dropdownMenuButton" >
-          <i class="fas fa-cog"></i>Page <i class="bi bi-plus"></i>
-        </button>
-        <div class="dropdown-content" id="dropdownContent">
-          <a href="Information.php"><i class="fas fa-chevron-right"></i>Information</a>
-          <a href="Forms.php" id="forms"><i class="fas fa-chevron-right"></i>Forms</a>
-          <a href="BarangayFAQ.php"><i class="fas fa-chevron-right"></i>FAQ</a>
-          <a href="BarangayContact&Message.php" class="contact1"><i class="fas fa-chevron-right"></i>Contact</a>
+<div class="card">
+    <form class="table-toolbar" method="get">
+        <div class="field-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search templates…">
         </div>
-      </div>
-      <a href="#" onclick="confirmLogout()" class="a1"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-    </div>
-  </div>
-  
-  <div class="title-with-icon" style="z-index: 1;">
-    <a href="AdminDashboard.php" title="Dashboard"><i class="bi bi-house"></i></a>
-    <p>Barangay Forms</p>
-  </div>
-
-  <div class="overlay" id="overlay" onclick="hideForm()"></div>
-  
-  <?php
-  require __DIR__ . '/../../connection.php';
-
-  $sql = "SELECT COUNT(*) AS totalcertificates FROM certificates";
-  $result = $conn->query($sql);
-
-  if ($result->num_rows > 0) {
-      $row = $result->fetch_assoc();
-      $countcertificates = $row['totalcertificates'];
-  } else {
-      $countcertificates = 0;
-  }
-
-  $conn->close();
-  ?>
-
-  <div class="form" id="barangayOfficialsDashboard">
-      <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3>List Chart</h3>
-          <button type="button" class="btn btn-success" onclick="showActivityForm()" style="margin-left: -50px;">Add Forms</button>
-      </div>
-      <hr>
-      <div class="heading-and-buttons">
-          <div class="show-entries">
-              <label for="entries">Show Entries: </label>
-              <input type="number" title="number" placeholder="0" value="<?php echo $countcertificates; ?>">
-          </div>    
-          <div class="search-bar">
-              <p>Search: </p><input type="text" id="searchInput" onkeyup="searchForms()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-      </div>
-      <hr>
-      <table class="table-no-border">
-          <thead>
-              <tr>
-                  <th>Certificate</th>
-                  <th>Requirements</th>
-                  <th>File</th>
-                  <th>Date</th>
-                  <th>Action</th>
-              </tr>
-          </thead>
-          <tbody>
-              <?php
-              require __DIR__ . '/../../connection.php';
-
-              $limit = 5;
-              $currentPage = isset($_GET['page']) ? $_GET['page'] : 1;
-              $offset = ($currentPage - 1) * $limit;
-
-              $searchQuery = isset($_GET['search']) ? $_GET['search'] : '';
-
-              $sql = "SELECT * FROM certificates WHERE certificate_name LIKE '%$searchQuery%' LIMIT $limit OFFSET $offset";
-
-              $result = $conn->query($sql);
-
-              if ($result->num_rows > 0) {
-                  while($row = $result->fetch_assoc()) {
-                      echo "<tr>";
-                      echo "<td>{$row['certificate_name']}</td>";
-                      echo "<td><ul style='list-style: none; padding-left: 0;'>";
-                      $requirements_list = explode("\n", $row['requirements']);
-                      foreach ($requirements_list as $requirement) {
-                          echo "<li>$requirement</li>";
-                      }
-                      echo "</ul></td>";
-                      echo "<td><a href='/BarangayManagementSystem-main/upload/uploads/{$row['file']}' target='_blank' style='outline: none; text-decoration: none; color: #000;'>{$row['file']}</a></td>";
-                      echo "<td>{$row['created_at']}</td>";
-                      echo "<td>";
-                      echo "<a href='#' onclick='editForms(" . $row['id'] . ")' class='btn btn-primary btnedit' style='margin-right:5px;'>Edit</a>";
-                      echo "<button class='btn btn-danger' onclick='deleteForm(" . $row['id'] . ")'>Delete</button>";
-                      echo "</td>";
-                      echo "</tr>";
-                  }
-              } else {
-                  echo "<tr><td colspan='5'>No Data Available</td></tr>";
-              }
-
-              $conn->close();
-              ?>
-          </tbody>
-      </table>
-      <div class="navigation-buttons" style="width: 100%;">
-          <p style="margin-right: 850px;">Showing <?php echo $countcertificates; ?> of <?php echo $limit; ?> entries.</p>
-          <a href="?page=<?php echo $currentPage > 1 ? $currentPage - 1 : 1; ?>" class="btn <?php echo $currentPage == 1 ? 'btn-secondary disabled' : 'btn-primary'; ?>">Previous</a>
-          <a style="width: 190px;" href="?page=<?php echo $currentPage < ceil($countcertificates / $limit) ? $currentPage + 1 : ceil($countcertificates / $limit); ?>" class="btn <?php echo $currentPage == ceil($countcertificates / $limit) ? 'btn-secondary disabled' : 'btn-primary'; ?>">Next</a>
-      </div>
-  </div>
-  <footer class="footer">
-    <div class="container">
-        <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="form-container" id="activityContainer">
-    <div class="heading-with-icon"></h2><i class="fas fa-plus-circle"></i><h2>Add Forms</h2>
-      <button type="button" class="btn-close" aria-label="Close" onclick="hideActivityForm()"></button>
-    </div>
-    <form action="/BarangayManagementSystem-main/backend/actions/forms_insert.php" method="POST" enctype="multipart/form-data">
-      <div class="row">
-          <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="fullName" class="lab">Certificate Name</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-chat-dots"></i></span>
-                      <input type="text" class="form-control" id="certificate" name="certificate" placeholder="Enter certificate name">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="contact" class="lab">Requirements</label>
-                    <div class="input-group">
-                      <textarea class="form-control" id="requirements" name="requirements" placeholder="Enter requirements"></textarea>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="address" class="lab">File</label>
-                    <div class="input-group">
-                      <input type="file" class="form-control" id="file" name="file" placeholder="Enter file">
-                    </div>
-                  </div>
-          </div>
-          <div class="form-group text-center">
-          <div class="col">
-            <button type="button" class="btn btn-secondary btn3" onclick="hideActivityForm()">Close</button>
-              <button type="submit" class="btn btn-primary btn4" id="add">Add</button>
-          </div>
-      </div>
-      </div>
-  </form>
-  </div>
-
-  <div class="form-container" id="editactivityContainer">
-    <div class="heading-with-icon">
-        <i class="fas fa-plus-circle"></i>
-        <h2>Edit Forms</h2>
-        <button type="button" class="btn-close" aria-label="Close" onclick="hideEditActivityForm()"></button>
-    </div>
-    <form action="/BarangayManagementSystem-main/backend/actions/forms_update.php" method="POST" enctype="multipart/form-data">
-        <?php
-          require __DIR__ . '/../../connection.php';
-          function fetchFormsData($conn, $formsId) {
-              $formsId = mysqli_real_escape_string($conn, $formsId);
-              $sql = "SELECT * FROM certificates WHERE id = '$formsId'";
-              $result = $conn->query($sql);
-              if ($result->num_rows > 0) {
-                  $row = $result->fetch_assoc();
-                  return $row;
-              } else {
-                  return null;
-              }
-          }
-
-          if (isset($_GET['id'])) {
-              $formsData = fetchFormsData($conn, $_GET['id']);
-              if ($formsData) {
-                  $formsid = $formsData["id"];
-                  $formsname = $formsData["certificate_name"];
-                  $formrequirements = $formsData["requirements"];
-                  $formfile = $formsData["file"];
-              } else {
-                  echo "Forms not found";
-              }
-          } else {
-              echo "Forms ID not provided";
-          }
-        ?>
-        <input type="hidden" name="forms_id" value="<?php echo $formsid; ?>">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="fullName" class="lab">Certificate Name</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-chat-dots"></i></span>
-                        <input type="text" class="form-control" id="certificate" name="certificate" placeholder="Enter certificate name" value="<?php echo $formsname; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="contact" class="lab">Requirements</label>
-                    <div class="input-group">
-                        <textarea class="form-control" id="requirements" name="requirements" placeholder="Enter requirements"><?php echo $formrequirements; ?></textarea>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="address" class="lab">File</label>
-                    <div class="input-group">
-                        <input type="file" class="form-control" id="file" name="file" placeholder="Enter file" value="<?php echo $formfile; ?>">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="form-group text-center">
-            <div class="col">
-                <button type="button" class="btn btn-secondary btn3" onclick="hideEditActivityForm()">Close</button>
-                <button type="submit" class="btn btn-primary btn4" id="update">Update</button>
-            </div>
-        </div>
+        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <span class="spacer"></span>
+        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
+
+    <div class="table-wrap">
+        <table class="data">
+            <thead><tr><th>Certificate</th><th>Requirements</th><th>Template file</th><th class="col-actions">Actions</th></tr></thead>
+            <tbody>
+            <?php if (!$rows): ?>
+                <tr><td colspan="4"><div class="empty"><i class="bi bi-award"></i><h3>No templates yet</h3></div></td></tr>
+            <?php else: foreach ($rows as $r): ?>
+                <tr data-row='<?= e(json_encode($r, JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
+                    <td class="fw-semibold"><?= e($r['certificate_name']) ?></td>
+                    <td>
+                        <?php $reqs = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) $r['requirements']))); ?>
+                        <?php if ($reqs): ?>
+                            <ul class="mb-0 ps-3 small text-muted-2"><?php foreach ($reqs as $q): ?><li><?= e($q) ?></li><?php endforeach; ?></ul>
+                        <?php else: ?><span class="text-caption">—</span><?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ($r['file']): ?>
+                            <a class="pill pill--info" target="_blank" href="<?= upload_url('uploads/' . $r['file']) ?>">
+                                <i class="bi bi-file-earmark-pdf"></i><?= e($r['file']) ?>
+                            </a>
+                        <?php else: ?><span class="text-caption">No file</span><?php endif; ?>
+                    </td>
+                    <td class="col-actions">
+                        <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editForm(this)"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
+                                onclick="deleteForm(<?= (int) $r['id'] ?>, '<?= e($r['certificate_name']) ?>')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <?php if ($pages > 1): ?>
+    <div class="card-ft pager">
+        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
+        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
+        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
+    </div>
+    <?php endif; ?>
+</div>
+
+<div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formForm" method="POST" enctype="multipart/form-data" action="<?= action_url('forms_insert.php') ?>">
+        <div class="modal-header">
+          <h5 class="modal-title" id="formModalTitle">Add Certificate Template</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="forms_id" id="cf_id">
+          <div class="mb-3">
+            <label class="form-label">Certificate name</label>
+            <input class="form-control" name="certificate" id="cf_name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Requirements <span class="text-caption">(one per line)</span></label>
+            <textarea class="form-control" rows="4" name="requirements" id="cf_requirements"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Template file (PDF)</label>
+            <input type="file" class="form-control" name="file" accept="application/pdf">
+            <div class="form-text" id="cf_fileNote"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="formSubmit">Save template</button>
+        </div>
+      </form>
+    </div>
   </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    var addBtn = document.getElementById('add');
+</div>
 
-    if (addBtn) {
-        addBtn.addEventListener('click', function() {
-        Swal.fire({
-          icon: 'success',
-          title: 'Official Added Successfully',
-          text: 'You have added the official successfully.',
-            timer: 12000,
-            showConfirmButton: false
-        }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.timer) {
-              hideActivityForm();
-            }
-        });
-        }, 3000);
-      }
-    });
+<form id="formDeleteForm" method="POST" action="<?= action_url('forms_delete.php') ?>" class="d-none">
+    <input type="hidden" name="delete_id" id="formDeleteId">
+</form>
 
-    function deleteForm(formId) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: 'Are you sure you want to delete this form?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    Swal.fire({
-                        title: 'Deleted!',
-                        text: 'Forms has been deleted.',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            location.reload();
-                        }
-                    });
-                }
-            };
-            xhttp.open("POST", "/BarangayManagementSystem-main/backend/actions/forms_delete.php", true);
-            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhttp.send("delete_id=" + formId);
-        } else if (
-            result.dismiss === Swal.DismissReason.cancel
-        ) {
-            Swal.fire(
-                'Cancelled',
-                'Your form is safe',
-                'error'
-            )
+<?php
+$insertUrl = action_url('forms_insert.php');
+$updateUrl = action_url('forms_update.php');
+$foot_extra = <<<HTML
+<script>
+const formModal = new bootstrap.Modal('#formModal');
+const cForm = document.getElementById('formForm');
+function openForm() {
+    cForm.reset(); cForm.action = '{$insertUrl}';
+    document.getElementById('cf_id').value = '';
+    document.getElementById('cf_fileNote').textContent = '';
+    document.getElementById('formModalTitle').textContent = 'Add Certificate Template';
+    document.getElementById('formSubmit').textContent = 'Save template';
+    formModal.show();
+}
+function editForm(btn) {
+    const d = JSON.parse(btn.closest('tr').dataset.row);
+    cForm.reset(); cForm.action = '{$updateUrl}';
+    document.getElementById('cf_id').value = d.id;
+    document.getElementById('cf_name').value = d.certificate_name ?? '';
+    document.getElementById('cf_requirements').value = d.requirements ?? '';
+    document.getElementById('cf_fileNote').textContent = d.file ? 'Current: ' + d.file + ' (leave empty to keep)' : '';
+    document.getElementById('formModalTitle').textContent = 'Edit Certificate Template';
+    document.getElementById('formSubmit').textContent = 'Update template';
+    formModal.show();
+}
+function deleteForm(id, name) {
+    Swal.fire({ icon:'warning', title:'Delete template?',
+        html:'Remove <b>' + name + '</b>? Existing requests keep their generated PDFs.',
+        showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#c0392b', reverseButtons:true
+    }).then(r => {
+        if (r.isConfirmed) {
+            document.getElementById('formDeleteId').value = id;
+            document.getElementById('formDeleteForm').submit();
         }
     });
 }
-
-    function editForms(formId) {
-      if (formId) {
-            var editUrl = 'Forms.php?id=' + formId;
-            window.location.href = editUrl;
-        } else {
-            console.error("Invalid userId:", formId);
-      }
-    }
-
-    window.onload = function() {
-        var urlParams = new URLSearchParams(window.location.search);
-        var formId = urlParams.get('id'); 
-        
-        if (formId) {
-            var editUrl = 'Forms.php?id=' + formId;
-            showEditActivityForm(editUrl);
-        }
-    }
-        
-    function hideEditActivityForm() {
-      var overlay = document.getElementById('overlay');
-      var formContainer = document.getElementById('editactivityContainer');
-      var blurredBackground = document.querySelector('.blurred-background'); 
-
-      blurredBackground.parentNode.removeChild(blurredBackground);
-
-      overlay.style.display = 'none';
-      formContainer.style.display = 'none';
-
-      window.location.href = 'Forms.php';
-    }
-
-    function showEditActivityForm(editUrl) {
-      var overlay = document.getElementById('overlay');
-      var formContainer = document.getElementById('editactivityContainer');
-      var blurredBackground = document.createElement('div'); 
-      blurredBackground.classList.add('blurred-background'); 
-
-      document.body.appendChild(blurredBackground);
-
-      overlay.style.display = 'block';
-      formContainer.style.display = 'block';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      var updateBtn = document.getElementById('update');
-
-      if (updateBtn) {
-        updateBtn.addEventListener('click', function() {
-          Swal.fire({
-            icon: 'success',
-            title: 'Official Edit Successfully',
-            text: 'You have successfuly edit Official.',
-            timer: 12000,
-            showConfirmButton: false
-          }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.timer) {
-              hideEditActivityForm();
-            }
-          });
-        }, 3000);
-      }
-    });
-
-    function searchForms() {
-        var input = document.getElementById("searchInput").value.toLowerCase();
-        var tableRows = document.querySelectorAll("tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-        var cells = row.getElementsByTagName("td");
-        var found = false;
-
-        Array.from(cells).forEach(function(cell) {
-            var cellText = cell.innerText.toLowerCase();
-            if (cellText.includes(input)) {
-                found = true;
-            }
-        });
-
-        if (found) {
-            row.style.display = "";
-            filteredRows++;
-        } else {
-            row.style.display = "none";
-        }
-    });
-    }
-
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Are you sure you want to log out?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, log out',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = 'Forms.php?logout=true';
-            }
-        });
-    }
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-euKpLsYQJz5jE0EEOxnTPI1a2ybp4QA9QfsB1LD73pI95/02djN3eVkD5bZlNumj" crossorigin="anonymous"></script>
-  <script src="/BarangayManagementSystem-main/frontend/assets/js/Admin.js"></script>
-</body>
-</html>
+</script>
+HTML;
+require __DIR__ . '/../partials/admin_bottom.php';

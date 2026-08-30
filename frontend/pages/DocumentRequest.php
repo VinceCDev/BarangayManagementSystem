@@ -1,323 +1,98 @@
 <?php
-session_start();
+/**
+ * DocumentRequest.php — certificate requests submitted by residents (read-only list).
+ * Each row links to the generated PDF via backend/actions/service_pdf.php.
+ */
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();
 
-if (!isset($_SESSION['username'])) {
-    header("Location: Login.php");
-    exit;
-}
+$pdo = db();
 
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: Login.php");
-    exit;
-}
+$search  = trim($_GET['search'] ?? '');
+$perPage = 12;
+$page    = max(1, (int) ($_GET['page'] ?? 1));
+$offset  = ($page - 1) * $perPage;
+$like    = '%' . $search . '%';
+
+$st = $pdo->prepare(
+    'SELECT COUNT(*) FROM document_requests
+      WHERE fullName LIKE ? OR purpose LIKE ? OR email LIKE ? OR business LIKE ?'
+);
+$st->execute([$like, $like, $like, $like]);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+
+$st = $pdo->prepare(
+    'SELECT dr.*, c.certificate_name
+       FROM document_requests dr
+       LEFT JOIN certificates c ON c.id = dr.certificate_id
+      WHERE dr.fullName LIKE ? OR dr.purpose LIKE ? OR dr.email LIKE ? OR dr.business LIKE ?
+      ORDER BY dr.id DESC LIMIT ? OFFSET ?'
+);
+$st->bindValue(1, $like); $st->bindValue(2, $like); $st->bindValue(3, $like); $st->bindValue(4, $like);
+$st->bindValue(5, $perPage, PDO::PARAM_INT);
+$st->bindValue(6, $offset, PDO::PARAM_INT);
+$st->execute();
+$rows = $st->fetchAll();
+
+$pdfUrl = action_url('service_pdf.php');
+
+$page_title    = 'Document Requests';
+$page_heading  = 'Document Requests';
+$page_subtitle = $total . ' request' . ($total === 1 ? '' : 's');
+$active_nav    = 'requests';
+
+require __DIR__ . '/../partials/admin_top.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Requests</title>
-    <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
-    <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/BarangayContact&Message.css">
-    <style>
-        #requests {
-            background-color: #1E63E9;
-            color: white;
-            border-radius: 8px;
-        }
-    </style>
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
-</head>
-<body class="admin">
-    <div>
-        <div class="header">
-            <i class="fas fa-bars hamburger" onclick="toggleNavigation()" style="display: none;"></i>
-            <div class="picfetch">
-                <?php
-                require __DIR__ . '/../../connection.php';
 
-                $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $picture = $row["picture"];
-                } else {
-                    $picture = "";
-                }
-
-                $sql = "SELECT * FROM profiledata WHERE email = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $firstname = $row["firstname"];
-                    $middlename = $row["middlename"];
-                    $lastname = $row["lastname"];
-                } else {
-                    $firstname = "";
-                    $middlename = "";
-                    $lastname = "";
-                }
-
-                $stmt->close();
-                $conn->close();
-                ?>
-
-                <img src="<?php echo $picture; ?>" width="80px" height="80px" onerror="this.style.display='none';">
-                <p class="p"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-            </div>
-            <div class="profile-icon" onclick="toggleProfileDetails()">
-                <i class="fas fa-user"></i>
-                <div class="profile-details-container" id="profileDetailsContainer">
-                    <div class="profile">
-                        <?php
-                        require __DIR__ . '/../../connection.php';
-
-                        $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("s", $_SESSION['username']);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-
-                        if ($result->num_rows > 0) {
-                            $row = $result->fetch_assoc();
-                            $picture = $row["picture"];
-                        } else {
-                            $picture = "";
-                        }
-
-                        $sql = "SELECT * FROM profiledata WHERE email = ?";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("s", $_SESSION['username']);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-
-                        if ($result->num_rows > 0) {
-                            $row = $result->fetch_assoc();
-                            $firstname = $row["firstname"];
-                            $middlename = $row["middlename"];
-                            $lastname = $row["lastname"];
-                        } else {
-                            $firstname = "";
-                            $middlename = "";
-                            $lastname = "";
-                        }
-
-                        $sql = "SELECT * FROM users WHERE userName = ?";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("s", $_SESSION['username']);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-
-                        if ($result->num_rows > 0) {
-                            $row = $result->fetch_assoc();
-                            $userType = $row["userType"];
-                        } else {
-                            $userType = "";
-                        }
-
-                        $stmt->close();
-                        $conn->close();
-                        ?>
-                        <img src="<?php echo $picture; ?>" alt="Barangay Hall of Paule 1" width="80px" height="80px">
-                        <div class="adminname">
-                            <p class="p1"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-                            <p class="p2"><?php echo $userType; ?></p>
-                        </div>
-                    </div>
-                    <hr>
-                    <a href="UserProfile.php"><i class="bi bi-person"></i> Profile</a>
-                    <a href="ForgotPassword.php"><i class="bi bi-key"></i> Reset Password</a>
-                    <hr>
-                    <a href="#" onclick="confirmLogout()"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-                </div>
-            </div>
+<div class="card">
+    <form class="table-toolbar" method="get">
+        <div class="field-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
+                   placeholder="Search requester, purpose, email…">
         </div>
-        <div class="navigation" id="navigation">
-            <div class="logo">
-                <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Barangay Logo" height="40px" width="40px">
-                <p>Barangay Records</p>
-            </div>
-            <div class="administrators">
-                <p><em> Administrator</em></p>
-            </div>
-            <a href="AdminDashboard.php" class="a1"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="BarangayOfficial.php" class="a1"><i class="fas fa-users"></i> Barangay Officials</a>
-            <a href="Blotter.php" class="a1"><i class="fas fa-book"></i> Blotter</a>
-            <a href="Resident.php" class="a1"><i class="fas fa-users"></i> Residents</a>
-            <a href="DocumentRequest.php" class="a1" id="requests"><i class="fas fa-file"></i> Document Requests</a>
-            <a href="Users.php" class="a1"><i class="fas fa-users-cog"></i> Users</a>
-            <a href="Activity.php" class="a1"><i class="bi bi-activity"></i> Activity</a>
-            <div class="dropdown" onclick="toggleDropdown()">
-                <button class="btn btn-primary plus-toggle" type="button" id="dropdownMenuButton">
-                    <i class="fas fa-cog"></i>Page <i class="bi bi-plus"></i>
-                </button>
-                <div class="dropdown-content" id="dropdownContent">
-                    <a href="Information.php"><i class="fas fa-chevron-right"></i>Information</a>
-                    <a href="Forms.php"><i class="fas fa-chevron-right"></i>Forms</a>
-                    <a href="BarangayFAQ.php"><i class="fas fa-chevron-right"></i>FAQ</a>
-                    <a href="#" class="contact1" id="cont"><i class="fas fa-chevron-right"></i>Contact</a>
-                </div>
-            </div>
-            <a href="#" onclick="confirmLogout()" class="a1" confirmLogout()><i class="fas fa-sign-out-alt"></i> Log Out</a>
-        </div>
-    </div>
+        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <span class="spacer"></span>
+        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
+    </form>
 
-    <div class="title-with-icon">
-        <a href="AdminDashboard.php" title="Dashboard"><i class="bi bi-house"></i></a>
-        <p style="margin-right: 1050px;">Document Request</p>
-    </div>
-
-    <?php
-        require __DIR__ . '/../../connection.php';
-
-        $limit = isset($_GET['entries']) ? (int)$_GET['entries'] : 5;
-        $search = isset($_GET['search']) ? $_GET['search'] : '';
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $offset = ($page - 1) * $limit;
-
-        $sql_count = "SELECT COUNT(*) as total FROM document_requests WHERE fullName LIKE ?";
-        $stmt_count = $conn->prepare($sql_count);
-        $search_term = "%$search%";
-        $stmt_count->bind_param("s", $search_term);
-        $stmt_count->execute();
-        $result_count = $stmt_count->get_result();
-        $total = $result_count->fetch_assoc()['total'];
-
-        $sql = "SELECT id, fullName, age, purpose, email, business FROM document_requests WHERE fullName LIKE ? OR age LIKE ? OR purpose LIKE ? OR email LIKE ? OR business LIKE ? LIMIT ?, ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssiii", $search_term, $search_term, $search_term, $search_term, $search_term, $offset, $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $conn->close();
-    ?>
-
-    <div class="contact" id="barangayOfficialsDashboard">
-        <div class="title-with-icon1">
-            <i class="fas fa-chart-line"></i>
-            <h3>List Chart</h3>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-            <div class="show-entries">
-                <label for="entries">Show Entries: </label>
-                <input type="number" id="entries" name="entries" title="number" placeholder="0" value="<?php echo min($result->num_rows, $limit); ?>" min="1" max="5">
-            </div>
-            <div class="search-bar">
-                <p>Search: </p>
-                <input type="text" id="searchInput" value="<?php echo $search; ?>" placeholder="Search for names..." oninput="searchMessage()" style="padding-left: 10px;">
-            </div>
-        </div>
-        <hr>
-        <table class="table-no-border">
+    <div class="table-wrap">
+        <table class="data">
             <thead>
-                <tr>
-                    <th>Full Name</th>
-                    <th>Age</th>
-                    <th>Purpose</th>
-                    <th>Email</th>
-                    <th>Business</th>
-                    <th>Action</th>
-                </tr>
+                <tr><th>Requested by</th><th>Certificate</th><th>Purpose</th><th>Date</th><th class="col-actions">Document</th></tr>
             </thead>
             <tbody>
-            <?php
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<tr>";
-                    echo "<td>" . $row["fullName"] . "</td>";
-                    echo "<td>" . $row["age"] . "</td>";
-                    echo "<td>" . $row["purpose"] . "</td>";
-                    echo "<td>" . $row["email"] . "</td>";
-                    echo "<td>" . $row["business"] . "</td>";
-                    echo '<td>';
-                    echo '<a href="/BarangayManagementSystem-main/backend/actions/service_pdf.php?id=' . $row["id"] . '&action=view" class="btn btn-warning" target="_blank">View</a> ';
-                    echo '<a href="/BarangayManagementSystem-main/backend/actions/service_pdf.php?id=' . $row["id"] . '&action=download" class="btn btn-success" download>Download</a> ';
-                    echo "<a style='margin-right: 5px;' href='https://mail.google.com/mail/?view=cm&fs=1&to=" . urlencode($row["email"]) . "' target='_blank' class='btn btn-primary'>Email</a>";
-                    echo '</td>';
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='6'>No Data Available</td></tr>";
-            }
-            ?>
+            <?php if (!$rows): ?>
+                <tr><td colspan="5"><div class="empty"><i class="bi bi-file-earmark-x"></i><h3>No document requests</h3></div></td></tr>
+            <?php else: foreach ($rows as $r): ?>
+                <tr>
+                    <td>
+                        <div class="fw-semibold"><?= e($r['fullName']) ?></div>
+                        <div class="text-caption"><?= e($r['email'] ?: '—') ?><?= $r['business'] ? ' · ' . e($r['business']) : '' ?></div>
+                    </td>
+                    <td><span class="pill pill--info"><?= e($r['certificate_name'] ?? 'Unknown') ?></span></td>
+                    <td class="text-truncate" style="max-width:16rem"><?= e($r['purpose'] ?: '—') ?></td>
+                    <td><?= e($r['request_date'] ? date('M j, Y', strtotime((string) $r['request_date'])) : '—') ?></td>
+                    <td class="col-actions">
+                        <a class="btn btn-sm btn-outline-secondary" target="_blank"
+                           href="<?= $pdfUrl ?>?id=<?= (int) $r['id'] ?>&action=view"><i class="bi bi-eye me-1"></i>View</a>
+                        <a class="btn btn-sm btn-outline-secondary"
+                           href="<?= $pdfUrl ?>?id=<?= (int) $r['id'] ?>&action=download"><i class="bi bi-download me-1"></i>PDF</a>
+                    </td>
+                </tr>
+            <?php endforeach; endif; ?>
             </tbody>
         </table>
-        <div class="navigation-buttons">
-            <p>Showing <?php echo $result->num_rows; ?> of 5 entries.</p>
-            <?php
-            $totalPages = ceil($total / $limit);
-            ?>
-            <a href="?page=<?php echo max(1, $page - 1); ?>&search=<?php echo $search; ?>&entries=<?php echo $limit; ?>" class="btn <?php echo $page == 1 ? 'btn-secondary disabled' : 'btn-primary'; ?>">Previous</a>
-            <a href="?page=<?php echo min($totalPages, $page + 1); ?>&search=<?php echo $search; ?>&entries=<?php echo $limit; ?>" class="btn <?php echo $page == $totalPages ? 'btn-secondary disabled' : 'btn-primary'; ?>">Next</a>
-        </div>
     </div>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p>
-        </div>
-    </footer>
+    <?php if ($pages > 1): ?>
+    <div class="card-ft pager">
+        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
+        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
+        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
+    </div>
+    <?php endif; ?>
+</div>
 
-    <script>
-        function searchMessage() {
-            var input = document.getElementById("searchInput").value.toLowerCase();
-            var tableRows = document.querySelectorAll("#barangayOfficialsDashboard tbody tr");
-            var filteredRows = 0;
-
-            tableRows.forEach(function (row) {
-                var cells = row.getElementsByTagName("td");
-                var matchFound = false;
-
-                for (var i = 0; i < cells.length; i++) {
-                    if (cells[i].innerText.toLowerCase().indexOf(input) > -1) {
-                        matchFound = true;
-                        break;
-                    }
-                }
-
-                if (matchFound) {
-                    row.style.display = "";
-                    filteredRows++;
-                } else {
-                    row.style.display = "none";
-                }
-            });
-        }
-
-        function confirmLogout() {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'Are you sure you want to log out?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, log out',
-                cancelButtonText: 'Cancel',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'DocumentRequest.php?logout=true';
-                }
-            });
-        }
-
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-euKpLsYQJz5jE0EEOxnTPI1a2ybp4QA9QfsB1LD73pI95/02djN3eVkD5bZlNumj" crossorigin="anonymous"></script>
-    <script src="/BarangayManagementSystem-main/frontend/assets/js/Admin.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../partials/admin_bottom.php'; ?>
