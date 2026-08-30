@@ -12,29 +12,30 @@ require_admin();
 
 $pdo = db();
 
+$types = ['admin' => 'Administrator', 'staff' => 'Staff'];
+
 $search  = trim($_GET['search'] ?? '');
+$fRole   = $_GET['role'] ?? '';
 $perPage = 10;
 $page    = max(1, (int) ($_GET['page'] ?? 1));
-$offset  = ($page - 1) * $perPage;
-$like    = '%' . $search . '%';
 
-$st = $pdo->prepare('SELECT COUNT(*) FROM users WHERE fullName LIKE ? OR userName LIKE ?');
-$st->execute([$like, $like]);
+$where  = ['(fullName LIKE ? OR userName LIKE ?)'];
+$params = ['%' . $search . '%', '%' . $search . '%'];
+if (isset($types[$fRole])) { $where[] = 'userType = ?'; $params[] = $fRole; }
+$whereSql = implode(' AND ', $where);
+
+$st = $pdo->prepare("SELECT COUNT(*) FROM users WHERE $whereSql");
+$st->execute($params);
 $total = (int) $st->fetchColumn();
 $pages = max(1, (int) ceil($total / $perPage));
+$page  = min($page, $pages);
+$offset = ($page - 1) * $perPage;
 
-$st = $pdo->prepare(
-    'SELECT id, fullName, userName, userType FROM users
-      WHERE fullName LIKE ? OR userName LIKE ?
-      ORDER BY fullName LIMIT ? OFFSET ?'
-);
-$st->bindValue(1, $like); $st->bindValue(2, $like);
-$st->bindValue(3, $perPage, PDO::PARAM_INT);
-$st->bindValue(4, $offset, PDO::PARAM_INT);
-$st->execute();
+$st = $pdo->prepare("SELECT id, fullName, userName, userType FROM users WHERE $whereSql ORDER BY fullName LIMIT $perPage OFFSET $offset");
+$st->execute($params);
 $rows = $st->fetchAll();
 
-$types = ['admin' => 'Administrator', 'staff' => 'Staff'];
+$qs = ['search' => $search, 'role' => $fRole];
 
 $page_title    = 'System Users';
 $page_heading  = 'System Users';
@@ -51,7 +52,9 @@ require __DIR__ . '/../partials/admin_top.php';
             <i class="bi bi-search"></i>
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search name or username…">
         </div>
-        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <?= filter_select('role', $fRole, ['' => 'All roles'] + $types) ?>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
+        <?php if ($search || $fRole): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>
         <span class="spacer"></span>
         <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
@@ -82,13 +85,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?php if ($pages > 1): ?>
-    <div class="card-ft pager">
-        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
-        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
-        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
-    </div>
-    <?php endif; ?>
+    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
 </div>
 
 <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">

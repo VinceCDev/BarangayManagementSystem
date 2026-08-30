@@ -10,34 +10,38 @@ require_admin();
 
 $pdo = db();
 
-/* ---- List query: paginated + optional name search (prepared) ---------- */
-$search   = trim($_GET['search'] ?? '');
-$perPage  = 8;
-$page     = max(1, (int) ($_GET['page'] ?? 1));
-$offset   = ($page - 1) * $perPage;
-$like     = '%' . $search . '%';
-
-$total = (function () use ($pdo, $like) {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM residents WHERE full_name LIKE ?');
-    $st->execute([$like]);
-    return (int) $st->fetchColumn();
-})();
-$pages = max(1, (int) ceil($total / $perPage));
-
-$st = $pdo->prepare(
-    'SELECT * FROM residents WHERE full_name LIKE ? ORDER BY full_name LIMIT ? OFFSET ?'
-);
-$st->bindValue(1, $like);
-$st->bindValue(2, $perPage, PDO::PARAM_INT);
-$st->bindValue(3, $offset, PDO::PARAM_INT);
-$st->execute();
-$residents = $st->fetchAll();
-
 /* ---- Reference option lists ------------------------------------------- */
 $bloodTypes  = ['O', 'A', 'B', 'AB'];
 $civilStatus = ['Single', 'Married', 'Separated', 'Widowed'];
 $genders     = ['Male', 'Female', 'Others'];
 $education   = ['Elementary', 'High School', 'College', 'Vocational', 'Post Graduate'];
+
+/* ---- List query: search + filters + pagination (all prepared) -------- */
+$search  = trim($_GET['search'] ?? '');
+$fStatus = $_GET['status'] ?? '';
+$fGender = $_GET['gender'] ?? '';
+$perPage = 8;
+$page    = max(1, (int) ($_GET['page'] ?? 1));
+$offset  = ($page - 1) * $perPage;
+
+$where  = ['full_name LIKE ?'];
+$params = ['%' . $search . '%'];
+if (in_array($fStatus, $civilStatus, true)) { $where[] = 'civil_status = ?'; $params[] = $fStatus; }
+if (in_array($fGender, $genders, true))     { $where[] = 'gender = ?';       $params[] = $fGender; }
+$whereSql = implode(' AND ', $where);
+
+$st = $pdo->prepare("SELECT COUNT(*) FROM residents WHERE $whereSql");
+$st->execute($params);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+$page  = min($page, $pages);
+$offset = ($page - 1) * $perPage;
+
+$st = $pdo->prepare("SELECT * FROM residents WHERE $whereSql ORDER BY full_name LIMIT $perPage OFFSET $offset");
+$st->execute($params);
+$residents = $st->fetchAll();
+
+$qs = ['search' => $search, 'status' => $fStatus, 'gender' => $fGender];
 
 $page_title   = 'Residents';
 $page_heading = 'Barangay Residents';
@@ -55,8 +59,11 @@ require __DIR__ . '/../partials/admin_top.php';
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
                    placeholder="Search by name…">
         </div>
-        <?php if ($search): ?>
-            <a class="btn btn-outline-secondary" href="?">Clear</a>
+        <?= filter_select('status', $fStatus, ['' => 'All civil status'] + array_combine($civilStatus, $civilStatus)) ?>
+        <?= filter_select('gender', $fGender, ['' => 'All genders'] + array_combine($genders, $genders)) ?>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
+        <?php if ($search || $fStatus || $fGender): ?>
+            <a class="btn btn-sm btn-outline-secondary" href="?">Reset</a>
         <?php endif; ?>
         <span class="spacer"></span>
         <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
@@ -109,15 +116,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?php if ($pages > 1): ?>
-    <div class="card-ft pager">
-        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
-        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>"
-           href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
-        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>"
-           href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
-    </div>
-    <?php endif; ?>
+    <?= render_pager($page, $pages, $total, $qs) ?>
 </div>
 
 <!-- Add / Edit modal ---------------------------------------------------- -->

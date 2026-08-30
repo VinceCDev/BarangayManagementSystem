@@ -90,3 +90,67 @@ function current_user_card(): array
 if (!function_exists('e')) {
     function e(?string $v): string { return htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 }
+
+/**
+ * Render a numbered pagination bar for a list view.
+ *
+ * @param int   $page   current page (1-based)
+ * @param int   $pages  total number of pages
+ * @param int   $total  total row count (for the summary line)
+ * @param array $query  extra query-string params to keep (search, filters…)
+ */
+function render_pager(int $page, int $pages, int $total, array $query = []): string
+{
+    if ($pages <= 1) {
+        return '';
+    }
+    $link = static function (int $p, string $label, bool $disabled = false, bool $active = false) use ($query): string {
+        $cls = 'page-link';
+        if ($disabled) return '<li class="page-item disabled"><span class="page-link">' . $label . '</span></li>';
+        if ($active)   return '<li class="page-item active"><span class="page-link">' . $label . '</span></li>';
+        $qs = http_build_query($query + ['page' => $p]);
+        return '<li class="page-item"><a class="page-link" href="?' . e($qs) . '">' . $label . '</a></li>';
+    };
+
+    // window of page numbers around the current page
+    $start = max(1, $page - 2);
+    $end   = min($pages, $start + 4);
+    $start = max(1, $end - 4);
+
+    $items  = $link($page - 1, '&laquo;', $page <= 1);
+    if ($start > 1) {
+        $items .= $link(1, '1');
+        if ($start > 2) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+    }
+    for ($i = $start; $i <= $end; $i++) {
+        $items .= $link($i, (string) $i, false, $i === $page);
+    }
+    if ($end < $pages) {
+        if ($end < $pages - 1) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+        $items .= $link($pages, (string) $pages);
+    }
+    $items .= $link($page + 1, '&raquo;', $page >= $pages);
+
+    return '<div class="card-ft pager">'
+         . '<span class="pager__info">' . number_format($total) . ' record' . ($total === 1 ? '' : 's')
+         . ' · page ' . $page . ' of ' . $pages . '</span>'
+         . '<nav aria-label="Pagination"><ul class="pagination pagination-sm mb-0">' . $items . '</ul></nav>'
+         . '</div>';
+}
+
+/**
+ * Render a labelled <select> filter that auto-submits its form on change.
+ *
+ * @param string $name     query-string / field name
+ * @param string $current  currently selected value
+ * @param array  $options  value => label  (a '' key acts as the "All" option)
+ */
+function filter_select(string $name, string $current, array $options): string
+{
+    $out = '<select class="form-select form-select-sm" name="' . e($name) . '" onchange="this.form.submit()" style="width:auto">';
+    foreach ($options as $val => $label) {
+        $sel = ((string) $val === (string) $current) ? ' selected' : '';
+        $out .= '<option value="' . e((string) $val) . '"' . $sel . '>' . e((string) $label) . '</option>';
+    }
+    return $out . '</select>';
+}

@@ -10,31 +10,30 @@ require_admin();
 
 $pdo = db();
 
+$statuses = ['Pending', 'Ongoing', 'Resolved', 'Settled', 'Dismissed'];
+
 $search  = trim($_GET['search'] ?? '');
+$fStatus = $_GET['status'] ?? '';
 $perPage = 10;
 $page    = max(1, (int) ($_GET['page'] ?? 1));
-$offset  = ($page - 1) * $perPage;
-$like    = '%' . $search . '%';
 
-$st = $pdo->prepare(
-    'SELECT COUNT(*) FROM blotterrecords WHERE complainant LIKE ? OR personToComplaint LIKE ? OR status LIKE ?'
-);
-$st->execute([$like, $like, $like]);
+$where  = ['(complainant LIKE ? OR personToComplaint LIKE ? OR status LIKE ?)'];
+$params = ['%' . $search . '%', '%' . $search . '%', '%' . $search . '%'];
+if (in_array($fStatus, $statuses, true)) { $where[] = 'status = ?'; $params[] = $fStatus; }
+$whereSql = implode(' AND ', $where);
+
+$st = $pdo->prepare("SELECT COUNT(*) FROM blotterrecords WHERE $whereSql");
+$st->execute($params);
 $total = (int) $st->fetchColumn();
 $pages = max(1, (int) ceil($total / $perPage));
+$page  = min($page, $pages);
+$offset = ($page - 1) * $perPage;
 
-$st = $pdo->prepare(
-    'SELECT * FROM blotterrecords
-      WHERE complainant LIKE ? OR personToComplaint LIKE ? OR status LIKE ?
-      ORDER BY id DESC LIMIT ? OFFSET ?'
-);
-$st->bindValue(1, $like); $st->bindValue(2, $like); $st->bindValue(3, $like);
-$st->bindValue(4, $perPage, PDO::PARAM_INT);
-$st->bindValue(5, $offset, PDO::PARAM_INT);
-$st->execute();
+$st = $pdo->prepare("SELECT * FROM blotterrecords WHERE $whereSql ORDER BY id DESC LIMIT $perPage OFFSET $offset");
+$st->execute($params);
 $rows = $st->fetchAll();
 
-$statuses = ['Pending', 'Ongoing', 'Resolved', 'Settled', 'Dismissed'];
+$qs = ['search' => $search, 'status' => $fStatus];
 
 function blotter_pill(string $s): string
 {
@@ -62,9 +61,11 @@ require __DIR__ . '/../partials/admin_top.php';
         <div class="field-search">
             <i class="bi bi-search"></i>
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
-                   placeholder="Search complainant, respondent, status…">
+                   placeholder="Search complainant or respondent…">
         </div>
-        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <?= filter_select('status', $fStatus, ['' => 'All statuses'] + array_combine($statuses, $statuses)) ?>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
+        <?php if ($search || $fStatus): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>
         <span class="spacer"></span>
         <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
@@ -103,13 +104,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?php if ($pages > 1): ?>
-    <div class="card-ft pager">
-        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
-        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
-        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
-    </div>
-    <?php endif; ?>
+    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
 </div>
 
 <div class="modal fade" id="blotterModal" tabindex="-1" aria-hidden="true">

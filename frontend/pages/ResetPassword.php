@@ -24,23 +24,25 @@ require __DIR__ . '/../partials/auth_top.php';
     <input type="hidden" name="email" value="<?= e($email) ?>">
 
     <label class="form-label" for="password">New password</label>
-    <div class="input-group mb-3">
-        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-        <input type="password" class="form-control" id="password" name="password" minlength="8" required>
+    <div class="field mb-3">
+        <i class="bi bi-lock"></i>
+        <input type="password" class="form-control" id="password" name="password"
+               placeholder="At least 8 characters" minlength="8" required>
     </div>
 
     <label class="form-label" for="confirmPassword">Confirm new password</label>
-    <div class="input-group mb-2">
-        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" minlength="8" required>
+    <div class="field mb-2">
+        <i class="bi bi-lock-fill"></i>
+        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+               placeholder="Re-enter your new password" minlength="8" required>
     </div>
     <div class="form-text mb-3">Use at least 8 characters, including a letter, a number and a symbol (@ $ ! % * ? &amp;).</div>
 
-    <button type="submit" class="btn btn-primary w-100 py-2">Reset password</button>
+    <button type="submit" class="btn btn-primary w-100" style="height:46px">Reset password</button>
 </form>
 
 <p class="text-center small text-muted-2 mt-4 mb-0">
-    <a href="<?= page_url('Login.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a>
+    <a href="<?= page_url('Login.php') ?>" class="fw-semibold"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a>
 </p>
 
 <?php

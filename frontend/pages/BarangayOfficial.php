@@ -10,32 +10,34 @@ require_admin();
 
 $pdo = db();
 
-$search  = trim($_GET['search'] ?? '');
-$perPage = 12;
-$page    = max(1, (int) ($_GET['page'] ?? 1));
-$offset  = ($page - 1) * $perPage;
-$like    = '%' . $search . '%';
-
-$st = $pdo->prepare('SELECT COUNT(*) FROM barangay_officials WHERE fullName LIKE ? OR position LIKE ?');
-$st->execute([$like, $like]);
-$total = (int) $st->fetchColumn();
-$pages = max(1, (int) ceil($total / $perPage));
-
-$st = $pdo->prepare(
-    'SELECT * FROM barangay_officials WHERE fullName LIKE ? OR position LIKE ?
-      ORDER BY id LIMIT ? OFFSET ?'
-);
-$st->bindValue(1, $like); $st->bindValue(2, $like);
-$st->bindValue(3, $perPage, PDO::PARAM_INT);
-$st->bindValue(4, $offset, PDO::PARAM_INT);
-$st->execute();
-$rows = $st->fetchAll();
-
 $positions = [
     'Punong Barangay', 'Barangay Kagawad', 'SK Chairperson', 'SK Kagawad',
     'Barangay Secretary', 'Barangay Treasurer', 'Barangay Health Worker',
     'Barangay Tanod', 'Lupong Tagapamayapa',
 ];
+
+$search    = trim($_GET['search'] ?? '');
+$fPosition = $_GET['position'] ?? '';
+$perPage   = 12;
+$page      = max(1, (int) ($_GET['page'] ?? 1));
+
+$where  = ['(fullName LIKE ? OR position LIKE ?)'];
+$params = ['%' . $search . '%', '%' . $search . '%'];
+if (in_array($fPosition, $positions, true)) { $where[] = 'position = ?'; $params[] = $fPosition; }
+$whereSql = implode(' AND ', $where);
+
+$st = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE $whereSql");
+$st->execute($params);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+$page  = min($page, $pages);
+$offset = ($page - 1) * $perPage;
+
+$st = $pdo->prepare("SELECT * FROM barangay_officials WHERE $whereSql ORDER BY id LIMIT $perPage OFFSET $offset");
+$st->execute($params);
+$rows = $st->fetchAll();
+
+$qs = ['search' => $search, 'position' => $fPosition];
 
 $page_title    = 'Barangay Officials';
 $page_heading  = 'Barangay Officials';
@@ -50,9 +52,11 @@ require __DIR__ . '/../partials/admin_top.php';
     <form class="table-toolbar" method="get">
         <div class="field-search">
             <i class="bi bi-search"></i>
-            <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search name or position…">
+            <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search name…">
         </div>
-        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <?= filter_select('position', $fPosition, ['' => 'All positions'] + array_combine($positions, $positions)) ?>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
+        <?php if ($search || $fPosition): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>
         <span class="spacer"></span>
         <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
@@ -89,13 +93,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?php if ($pages > 1): ?>
-    <div class="card-ft pager">
-        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
-        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
-        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
-    </div>
-    <?php endif; ?>
+    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
 </div>
 
 <div class="modal fade" id="officialModal" tabindex="-1" aria-hidden="true">

@@ -36,15 +36,16 @@ require __DIR__ . '/../partials/auth_top.php';
 
 <form method="post">
     <label class="form-label" for="userName">Account email</label>
-    <div class="input-group mb-3">
-        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-        <input type="text" class="form-control" id="userName" name="userName" required autofocus>
+    <div class="field mb-3">
+        <i class="bi bi-envelope"></i>
+        <input type="text" class="form-control" id="userName" name="userName"
+               placeholder="you@barangay.gov.ph" required autofocus>
     </div>
-    <button type="submit" class="btn btn-primary w-100 py-2">Continue</button>
+    <button type="submit" class="btn btn-primary w-100" style="height:46px">Continue</button>
 </form>
 
 <p class="text-center small text-muted-2 mt-4 mb-0">
-    <a href="<?= page_url('Login.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a>
+    <a href="<?= page_url('Login.php') ?>" class="fw-semibold"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a>
 </p>
 
 <?php require __DIR__ . '/../partials/auth_bottom.php'; ?>

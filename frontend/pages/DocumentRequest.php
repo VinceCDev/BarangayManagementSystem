@@ -8,33 +8,37 @@ require_admin();
 
 $pdo = db();
 
-$search  = trim($_GET['search'] ?? '');
+$certOptions = $pdo->query('SELECT id, certificate_name FROM certificates ORDER BY certificate_name')
+                   ->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$search = trim($_GET['search'] ?? '');
+$fCert  = (int) ($_GET['cert'] ?? 0);
 $perPage = 12;
 $page    = max(1, (int) ($_GET['page'] ?? 1));
-$offset  = ($page - 1) * $perPage;
-$like    = '%' . $search . '%';
 
-$st = $pdo->prepare(
-    'SELECT COUNT(*) FROM document_requests
-      WHERE fullName LIKE ? OR purpose LIKE ? OR email LIKE ? OR business LIKE ?'
-);
-$st->execute([$like, $like, $like, $like]);
+$where  = ['(dr.fullName LIKE ? OR dr.purpose LIKE ? OR dr.email LIKE ? OR dr.business LIKE ?)'];
+$params = ['%' . $search . '%', '%' . $search . '%', '%' . $search . '%', '%' . $search . '%'];
+if ($fCert && isset($certOptions[$fCert])) { $where[] = 'dr.certificate_id = ?'; $params[] = $fCert; }
+$whereSql = implode(' AND ', $where);
+
+$st = $pdo->prepare("SELECT COUNT(*) FROM document_requests dr WHERE $whereSql");
+$st->execute($params);
 $total = (int) $st->fetchColumn();
 $pages = max(1, (int) ceil($total / $perPage));
+$page  = min($page, $pages);
+$offset = ($page - 1) * $perPage;
 
 $st = $pdo->prepare(
-    'SELECT dr.*, c.certificate_name
+    "SELECT dr.*, c.certificate_name
        FROM document_requests dr
        LEFT JOIN certificates c ON c.id = dr.certificate_id
-      WHERE dr.fullName LIKE ? OR dr.purpose LIKE ? OR dr.email LIKE ? OR dr.business LIKE ?
-      ORDER BY dr.id DESC LIMIT ? OFFSET ?'
+      WHERE $whereSql
+      ORDER BY dr.id DESC LIMIT $perPage OFFSET $offset"
 );
-$st->bindValue(1, $like); $st->bindValue(2, $like); $st->bindValue(3, $like); $st->bindValue(4, $like);
-$st->bindValue(5, $perPage, PDO::PARAM_INT);
-$st->bindValue(6, $offset, PDO::PARAM_INT);
-$st->execute();
+$st->execute($params);
 $rows = $st->fetchAll();
 
+$qs = ['search' => $search, 'cert' => $fCert];
 $pdfUrl = action_url('service_pdf.php');
 
 $page_title    = 'Document Requests';
@@ -52,7 +56,9 @@ require __DIR__ . '/../partials/admin_top.php';
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
                    placeholder="Search requester, purpose, email…">
         </div>
-        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <?= filter_select('cert', (string) $fCert, ['' => 'All certificates'] + $certOptions) ?>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
+        <?php if ($search || $fCert): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>
         <span class="spacer"></span>
         <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
@@ -86,13 +92,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?php if ($pages > 1): ?>
-    <div class="card-ft pager">
-        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
-        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
-        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
-    </div>
-    <?php endif; ?>
+    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
 </div>
 
 <?php require __DIR__ . '/../partials/admin_bottom.php'; ?>

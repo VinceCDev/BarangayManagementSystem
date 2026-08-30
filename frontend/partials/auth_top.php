@@ -3,7 +3,7 @@
  * partials/auth_top.php — split-screen layout for Login / Forgot / Reset.
  *
  *   $page_title  string
- *   $aside_title string   headline on the blue panel
+ *   $aside_title string   headline on the brand panel
  *   $aside_text  string   supporting line
  */
 $page_title  = $page_title  ?? 'Sign in';
@@ -26,16 +26,35 @@ $aside_text  = $aside_text  ?? 'Manage resident records, blotter reports, certif
 </head>
 <body>
 <div class="auth">
-    <div class="auth__aside">
+    <aside class="auth__aside">
         <div class="brand">
             <img src="<?= asset('images/logo1.png') ?>" alt="Barangay Paule 1 seal">
-            <span>Barangay Paule 1<br><small class="fw-normal" style="color:#9db6e6">Rizal, Laguna</small></span>
+            <span>Barangay Paule 1<small>Rizal, Laguna · Official Portal</small></span>
         </div>
-        <div>
+
+        <div class="d-flex flex-column gap-4">
+            <div class="auth__feature">
+                <i class="bi bi-person-vcard"></i>
+                <div><b>Resident records</b><span>Household and personal information, kept up to date.</span></div>
+            </div>
+            <div class="auth__feature">
+                <i class="bi bi-journal-text"></i>
+                <div><b>Blotter &amp; incident reports</b><span>File and track complaints from one place.</span></div>
+            </div>
+            <div class="auth__feature">
+                <i class="bi bi-award"></i>
+                <div><b>Certificate requests</b><span>Generate clearances and certificates as PDFs.</span></div>
+            </div>
+        </div>
+
+        <div class="headline">
             <h2><?= e($aside_title) ?></h2>
             <p><?= e($aside_text) ?></p>
         </div>
-        <p class="small mb-0" style="color:#9db6e6">&copy; <?= date('Y') ?> Barangay Paule 1. All rights reserved.</p>
-    </div>
-    <div class="auth__main">
+
+        <p class="copyright mb-0">&copy; <?= date('Y') ?> Barangay Paule 1. All rights reserved.</p>
+    </aside>
+
+    <main class="auth__main">
         <div class="auth__card">
+            <img src="<?= asset('images/logo1.png') ?>" alt="" class="auth__logo">

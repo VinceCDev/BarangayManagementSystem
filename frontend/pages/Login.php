@@ -15,22 +15,22 @@ require __DIR__ . '/../partials/auth_top.php';
 ?>
 
 <h1 class="mb-1">Welcome back</h1>
-<p class="text-muted-2 mb-4">Sign in to the management console.</p>
+<p class="text-muted-2 mb-4">Sign in to the barangay management console.</p>
 
 <form id="loginForm" novalidate>
     <label class="form-label" for="username">Username</label>
-    <div class="input-group mb-1">
-        <span class="input-group-text"><i class="bi bi-person"></i></span>
+    <div class="field mb-1">
+        <i class="bi bi-person"></i>
         <input type="text" class="form-control" id="username" name="username"
-               autocomplete="username" required value="<?= $rememberedUser ?>">
+               placeholder="you@barangay.gov.ph" autocomplete="username" required value="<?= $rememberedUser ?>">
     </div>
 
     <label class="form-label" for="password">Password</label>
-    <div class="input-group mb-2">
-        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+    <div class="field mb-2">
+        <i class="bi bi-lock"></i>
         <input type="password" class="form-control" id="password" name="password"
-               autocomplete="current-password" required>
-        <button class="btn btn-outline-secondary" type="button" id="togglePw" tabindex="-1" aria-label="Show password">
+               placeholder="Enter your password" autocomplete="current-password" required style="padding-right:44px">
+        <button class="toggle" type="button" id="togglePw" tabindex="-1" aria-label="Show password">
             <i class="bi bi-eye"></i>
         </button>
     </div>
@@ -41,16 +41,16 @@ require __DIR__ . '/../partials/auth_top.php';
                    <?= $rememberedUser ? 'checked' : '' ?>>
             <label class="form-check-label" for="remember">Remember me</label>
         </div>
-        <a href="<?= page_url('ForgotPassword.php') ?>" class="small">Forgot password?</a>
+        <a href="<?= page_url('ForgotPassword.php') ?>" class="small fw-semibold">Forgot password?</a>
     </div>
 
-    <button type="submit" class="btn btn-primary w-100 py-2">
+    <button type="submit" class="btn btn-primary w-100" style="height:46px">
         <i class="bi bi-box-arrow-in-right me-1"></i> Sign in
     </button>
 </form>
 
 <p class="text-center small text-muted-2 mt-4 mb-0">
-    <a href="<?= page_url('index.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to public site</a>
+    <a href="<?= page_url('index.php') ?>" class="fw-semibold"><i class="bi bi-arrow-left me-1"></i>Back to public site</a>
 </p>
 
 <?php

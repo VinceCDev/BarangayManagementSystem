@@ -80,13 +80,7 @@ require __DIR__ . '/../partials/admin_top.php';
                 </tbody>
             </table>
         </div>
-        <?php if ($pages > 1): ?>
-        <div class="card-ft pager">
-            <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
-            <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
-            <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
-        </div>
-        <?php endif; ?>
+        <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
     </div>
   </div>
 
