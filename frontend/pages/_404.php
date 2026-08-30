@@ -28,13 +28,19 @@ $home = home_url();
             display: flex; align-items: center; justify-content: center;
             padding: clamp(16px, 5vw, 48px);
             background:
-                radial-gradient(34rem 34rem at 8% -10%, rgba(28,95,214,.10), transparent 60%),
-                radial-gradient(30rem 30rem at 110% 115%, rgba(11,47,110,.12), transparent 60%),
-                var(--bg);
+                radial-gradient(44rem 44rem at 4% -12%,  rgba(28, 95, 214, .55), transparent 62%),
+                radial-gradient(40rem 40rem at 106% 114%, rgba(11, 47, 110, .60), transparent 60%),
+                radial-gradient(28rem 28rem at 96% -6%,   rgba(10, 162, 192, .35), transparent 60%),
+                linear-gradient(160deg, #c3d8f6 0%, #a9c6f0 45%, #cadcf5 100%);
         }
         .nf__card {
             width: min(460px, 100%);
             text-align: center;
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, .7);
+            border-radius: 20px;
+            padding: clamp(28px, 6vw, 44px) clamp(24px, 5vw, 40px);
+            box-shadow: 0 30px 70px rgba(11, 32, 74, .28), 0 8px 22px rgba(11, 32, 74, .16);
         }
         .nf__code {
             font-weight: 800; line-height: 1; letter-spacing: -.04em;
