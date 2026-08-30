@@ -26,32 +26,39 @@ if (!function_exists('nav_all')) {
                 ['key' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'bi-speedometer2', 'file' => 'AdminDashboard.php',    'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
                 ['key' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'bi-speedometer2', 'file' => 'ResidentDashboard.php', 'roles' => ['resident']],
             ],
+
+            // ---- Resident-only portal --------------------------------------
             'My Portal' => [
                 ['key' => 'myrequests',  'label' => 'My Document Requests', 'icon' => 'bi-file-earmark-text', 'file' => 'MyRequests.php',  'roles' => ['resident']],
                 ['key' => 'request_new', 'label' => 'Request a Document',   'icon' => 'bi-plus-square',       'file' => 'Certificate.php', 'roles' => ['resident']],
                 ['key' => 'mymessages',  'label' => 'My Messages',          'icon' => 'bi-chat-left-dots',    'file' => 'MyMessages.php',  'roles' => ['resident']],
             ],
+
+            // ---- Official / SK / Treasurer — only their own work ---------
             'Work' => [
-                ['key' => 'tasks',    'label' => 'Tasks & Activities',   'icon' => 'bi-check2-square',  'file' => 'Tasks.php',    'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
-                ['key' => 'activity', 'label' => 'Barangay Activities',  'icon' => 'bi-calendar-event', 'file' => 'Activity.php', 'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
+                ['key' => 'tasks',    'label' => 'My Tasks',           'icon' => 'bi-check2-square',  'file' => 'Tasks.php',    'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
+                ['key' => 'activity', 'label' => 'Barangay Activities','icon' => 'bi-calendar-event', 'file' => 'Activity.php', 'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
+                ['key' => 'requests', 'label' => 'Document Requests',  'icon' => 'bi-file-earmark-text', 'file' => 'DocumentRequest.php', 'roles' => ['admin', 'treasurer']],
+                ['key' => 'messages', 'label' => 'Messages',           'icon' => 'bi-inbox',         'file' => 'BarangayContact&Message.php', 'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
             ],
+
+            // ---- Everything below is ADMINISTRATOR-ONLY -----------------
             'Records' => [
-                ['key' => 'officials', 'label' => 'Barangay Officials', 'icon' => 'bi-people',       'file' => 'BarangayOfficial.php', 'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
-                ['key' => 'residents', 'label' => 'Residents',          'icon' => 'bi-person-vcard', 'file' => 'Resident.php',         'roles' => ['admin', 'official', 'sk_chairman']],
-                ['key' => 'blotter',   'label' => 'Blotter',            'icon' => 'bi-journal-text', 'file' => 'Blotter.php',          'roles' => ['admin', 'official']],
+                ['key' => 'officials', 'label' => 'Barangay Officials', 'icon' => 'bi-people',       'file' => 'BarangayOfficial.php', 'roles' => ['admin']],
+                ['key' => 'residents', 'label' => 'Residents',          'icon' => 'bi-person-vcard', 'file' => 'Resident.php',         'roles' => ['admin']],
+                ['key' => 'blotter',   'label' => 'Blotter',            'icon' => 'bi-journal-text', 'file' => 'Blotter.php',          'roles' => ['admin']],
             ],
             'Services' => [
-                ['key' => 'requests', 'label' => 'Document Requests', 'icon' => 'bi-file-earmark-text', 'file' => 'DocumentRequest.php',         'roles' => ['admin', 'official', 'treasurer']],
-                ['key' => 'forms',    'label' => 'Certificates',      'icon' => 'bi-award',             'file' => 'Forms.php',                   'roles' => ['admin', 'treasurer']],
-                ['key' => 'messages', 'label' => 'Messages',          'icon' => 'bi-inbox',             'file' => 'BarangayContact&Message.php', 'roles' => ['admin', 'official', 'sk_chairman', 'treasurer']],
+                ['key' => 'forms', 'label' => 'Certificate Templates', 'icon' => 'bi-award', 'file' => 'Forms.php', 'roles' => ['admin']],
             ],
             'Content' => [
-                ['key' => 'information', 'label' => 'Barangay Information', 'icon' => 'bi-info-circle',     'file' => 'Information.php',  'roles' => ['admin', 'official']],
-                ['key' => 'faq',        'label' => 'FAQ',                  'icon' => 'bi-question-circle', 'file' => 'BarangayFAQ.php', 'roles' => ['admin', 'official']],
+                ['key' => 'information', 'label' => 'Barangay Information', 'icon' => 'bi-info-circle',     'file' => 'Information.php',  'roles' => ['admin']],
+                ['key' => 'faq',        'label' => 'FAQ',                  'icon' => 'bi-question-circle', 'file' => 'BarangayFAQ.php', 'roles' => ['admin']],
             ],
             'Administration' => [
                 ['key' => 'users', 'label' => 'System Users', 'icon' => 'bi-shield-lock', 'file' => 'Users.php', 'roles' => ['admin']],
             ],
+
             'Account' => [
                 ['key' => 'profile', 'label' => 'My Profile', 'icon' => 'bi-person-circle', 'file' => 'UserProfile.php', 'roles' => '*'],
             ],

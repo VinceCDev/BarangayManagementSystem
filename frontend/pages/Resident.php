@@ -6,7 +6,7 @@
  * Delete (AJAX GET) -> backend/actions/resident_delete.php?id=
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_role(['official', 'sk_chairman']);
+require_role([]);
 
 $pdo = db();
 

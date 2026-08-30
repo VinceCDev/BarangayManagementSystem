@@ -5,7 +5,7 @@
  * to backend/actions/information_update.php.
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_role(['official']);
+require_role([]);
 
 $pdo = db();
 $one = static fn (string $sql) => $pdo->query($sql)->fetch() ?: [];

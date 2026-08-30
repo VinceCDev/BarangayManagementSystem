@@ -35,7 +35,9 @@ $page_title    = 'Activities';
 $page_heading  = 'Barangay Activities';
 $page_subtitle = $total . ' record' . ($total === 1 ? '' : 's');
 $active_nav    = 'activity';
-$page_actions  = '<button class="btn btn-primary" onclick="openActivity()"><i class="bi bi-plus-lg me-1"></i>Add Activity</button>';
+$page_actions  = is_admin()
+    ? '<button class="btn btn-primary" onclick="openActivity()"><i class="bi bi-plus-lg me-1"></i>Add Activity</button>'
+    : '';
 
 require __DIR__ . '/../partials/admin_top.php';
 ?>
@@ -67,9 +69,19 @@ require __DIR__ . '/../partials/admin_top.php';
                             <?= e($r['description']) ?>
                         </p>
                         <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="showView(this)"
+                                    data-view='<?= e(json_encode(['title' => 'Activity', 'fields' => [
+                                        'Activity'    => (string) $r['activity'],
+                                        'Date'        => (string) $r['date'],
+                                        'Description' => (string) $r['description'],
+                                    ]], JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                            <?php if (is_admin()): ?>
                             <button class="btn btn-sm btn-outline-secondary" onclick="editActivity(this)"><i class="bi bi-pencil me-1"></i>Edit</button>
                             <button class="btn btn-sm btn-outline-secondary text-danger"
                                     onclick="deleteActivity(<?= (int) $r['id'] ?>, '<?= e($r['activity']) ?>')"><i class="bi bi-trash me-1"></i>Delete</button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

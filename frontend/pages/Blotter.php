@@ -6,7 +6,7 @@
  * Delete (AJAX GET) -> backend/actions/blotter_delete.php?id=
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_role(['official']);
+require_role([]);
 
 $pdo = db();
 

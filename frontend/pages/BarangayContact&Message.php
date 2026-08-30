@@ -96,7 +96,9 @@ require __DIR__ . '/../partials/admin_top.php';
                         <td><?= e($c['description'] ?: '—') ?></td>
                         <td><?= e($c['contacts'] ?: '—') ?></td>
                         <td class="col-actions">
+                            <?php if (is_admin()): ?>
                             <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editContact(this)"><i class="bi bi-pencil"></i></button>
+                            <?php else: ?><span class="text-caption">—</span><?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

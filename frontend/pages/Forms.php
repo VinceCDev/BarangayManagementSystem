@@ -6,7 +6,7 @@
  * Delete -> backend/actions/forms_delete.php (POST delete_id)
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_role(['treasurer']);
+require_role([]);
 
 $pdo = db();
 

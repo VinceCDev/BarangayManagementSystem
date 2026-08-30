@@ -4,7 +4,7 @@
  * Each row links to the generated PDF via backend/actions/service_pdf.php.
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_role(['official', 'treasurer']);
+require_role(['treasurer']);
 
 $pdo = db();
 
