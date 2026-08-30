@@ -1,0 +1,33 @@
+# ===========================================================================
+#  Pretty-URL routing for the Barangay Management System (Apache + mod_rewrite)
+# ===========================================================================
+#  Sends every request that is NOT a real file or directory to the front
+#  controller (index.php), which maps clean paths like /pages/login and
+#  /api/v1/residents to the right handler.
+#
+#  RewriteBase must match the folder this project lives in under htdocs and
+#  the "app.base_url" value in backend/config/config.php.
+# ---------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /BarangayManagementSystem-main/
+
+    # Serve existing files and directories as-is (assets, uploads, and the
+    # original .php paths that are still bookmarked / hard-coded).
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else is a route -> front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Never serve the local credential file or VCS metadata over HTTP.
+<FilesMatch "(^\.|^config\.php$|composer\.(json|lock)$)">
+    Require all denied
+</FilesMatch>
+
+# Small hardening: no directory listings, UTF-8 by default.
+Options -Indexes
+AddDefaultCharset UTF-8

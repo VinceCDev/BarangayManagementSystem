@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../backend/connection.php';          // $conn, $fileManagementConn, db(), constants
 require_once __DIR__ . '/../../backend/helpers/auth.php'; // session + require_login()
+require_once __DIR__ . '/../../backend/routes/pages.php'; // clean-URL <-> page-file map
 
 /** Absolute URL helpers built from BASE_URL (defined in config/database.php). */
 function asset(string $path): string
@@ -42,7 +43,17 @@ function asset(string $path): string
     }
     return $url;
 }
-function page_url(string $file): string { return PAGES_URL . '/' . ltrim($file, '/'); }
+/**
+ * Clean URL for a page view, e.g. page_url('Login.php') -> ".../pages/login".
+ * Accepts a legacy file name ("Login.php") or a slug ("login") — both work,
+ * so existing call sites did not have to change.
+ */
+function page_url(string $file): string { return BASE_URL . '/pages/' . page_file_to_slug($file); }
+
+/**
+ * Direct URL to a form/AJAX handler in backend/actions/ (unchanged). The
+ * front controller also accepts the alias ".../actions/{name}".
+ */
 function action_url(string $file): string { return ACTIONS_URL . '/' . ltrim($file, '/'); }
 function upload_url(string $path): string { return UPLOAD_URL . '/' . ltrim($path, '/'); }
 /** The public home page (index.php now lives at the project root). */
