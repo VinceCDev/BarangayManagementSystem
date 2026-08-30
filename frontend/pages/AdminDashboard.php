@@ -1,859 +1,196 @@
 <?php
-  session_start();
+/**
+ * AdminDashboard.php — overview of the whole system.
+ * Six headline counters plus compact "recent activity" panels; each panel
+ * links to the full management page.
+ */
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();
 
-  if (!isset($_SESSION['username'])) {
-      header("Location: Login.php");
-      exit;
-  }
+$pdo = db();
 
-  if (isset($_GET['logout'])) {
-      session_destroy();
+/** Small helper: SELECT COUNT(*) FROM <table>. */
+$countOf = static function (string $table) use ($pdo): int {
+    // Table name is a hard-coded literal below, never user input.
+    return (int) $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
+};
 
-      header("Location: Login.php");
-      exit;
-  }
+$stats = [
+    ['label' => 'Barangay Officials', 'value' => $countOf('barangay_officials'), 'icon' => 'bi-people',            'href' => 'BarangayOfficial.php',        'mod' => ''],
+    ['label' => 'Residents',          'value' => $countOf('residents'),          'icon' => 'bi-person-vcard',      'href' => 'Resident.php',                'mod' => 'stat--green'],
+    ['label' => 'Blotter Records',    'value' => $countOf('blotterrecords'),     'icon' => 'bi-journal-text',      'href' => 'Blotter.php',                 'mod' => 'stat--red'],
+    ['label' => 'Document Requests',  'value' => $countOf('document_requests'),  'icon' => 'bi-file-earmark-text', 'href' => 'DocumentRequest.php',         'mod' => 'stat--gold'],
+    ['label' => 'Messages',           'value' => $countOf('receivemessages'),    'icon' => 'bi-chat-left-dots',    'href' => 'BarangayContact&Message.php', 'mod' => 'stat--violet'],
+    ['label' => 'Activities',         'value' => $countOf('activity'),           'icon' => 'bi-calendar-event',    'href' => 'Activity.php',                'mod' => 'stat--teal'],
+];
+
+$recentResidents = $pdo->query(
+    'SELECT photo, full_name, age, occupation, contact FROM residents ORDER BY id DESC LIMIT 6'
+)->fetchAll();
+
+$recentBlotter = $pdo->query(
+    'SELECT status, complainant, personToComplaint, created_at FROM blotterrecords ORDER BY id DESC LIMIT 6'
+)->fetchAll();
+
+$recentActivities = $pdo->query(
+    'SELECT photos, activity, date, description FROM activity ORDER BY id DESC LIMIT 5'
+)->fetchAll();
+
+$recentRequests = $pdo->query(
+    'SELECT dr.fullName, c.certificate_name, dr.purpose, dr.request_date
+       FROM document_requests dr
+       LEFT JOIN certificates c ON c.id = dr.certificate_id
+      ORDER BY dr.id DESC LIMIT 6'
+)->fetchAll();
+
+/** Map a blotter status string to a pill style. */
+function status_pill(string $status): string
+{
+    $s = strtolower(trim($status));
+    $cls = match (true) {
+        str_contains($s, 'resolve'), str_contains($s, 'done'), str_contains($s, 'settle') => 'pill--success',
+        str_contains($s, 'progress'), str_contains($s, 'ongoing')                          => 'pill--info',
+        str_contains($s, 'pending'), $s === ''                                             => 'pill--warning',
+        default                                                                            => 'pill--muted',
+    };
+    return '<span class="pill ' . $cls . '">' . e($status ?: 'Pending') . '</span>';
+}
+
+$page_title    = 'Dashboard';
+$page_heading  = 'Dashboard';
+$page_subtitle = 'A snapshot of barangay records and service requests.';
+$active_nav    = 'dashboard';
+
+require __DIR__ . '/../partials/admin_top.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
-  <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/AdminDashboard.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
-</head>
-<body class="admin">
-    <div>
-    <div class="header">
-      <div class="picfetch">
-        <?php
-            require __DIR__ . '/../../connection.php';
 
-              $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
+<!-- Headline counters -->
+<section class="stat-grid" aria-label="Summary">
+    <?php foreach ($stats as $s): ?>
+        <a class="stat <?= e($s['mod']) ?> text-decoration-none" href="<?= page_url($s['href']) ?>">
+            <span class="stat__icon"><i class="bi <?= e($s['icon']) ?>"></i></span>
+            <span>
+                <span class="stat__value"><?= number_format($s['value']) ?></span>
+                <span class="stat__label"><?= e($s['label']) ?></span>
+            </span>
+        </a>
+    <?php endforeach; ?>
+</section>
 
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $picture = $row["picture"];
-            } else {
-                $picture = "";
-            }
-                
-              $sql = "SELECT * FROM profiledata WHERE email = ?";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              $firstname = $row["firstname"];
-              $middlename = $row["middlename"];
-              $lastname = $row["lastname"];
-            } else {
-              $firstname = "";
-              $middlename = "";
-              $lastname = "";
-            }
-
-            $stmt->close();
-            $conn->close();
-          ?>
-
-          <img src="<?php echo $picture; ?>" width="80px" height="80px" onerror="this.style.display='none';">
-          <p class="p"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-      </div>
-      <div class="profile-icon" onclick="toggleProfileDetails()">
-          <i class="fas fa-user"></i>
-          <div class="profile-details-container" id="profileDetailsContainer">
-              <div class="profile">
-              <?php
-                require __DIR__ . '/../../connection.php';
-
-                $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $picture = $row["picture"];
-                } else {
-                    $picture = "";
-                }
-
-                $sql = "SELECT * FROM profiledata WHERE email = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $firstname = $row["firstname"];
-                    $middlename = $row["middlename"];
-                    $lastname = $row["lastname"];
-                } else {
-                    $firstname = "";
-                    $middlename = "";
-                    $lastname = "";
-                }
-
-                $sql = "SELECT * FROM users WHERE userName = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $userType = $row["userType"];
-                } else {
-                    $userType = "";
-                }
-
-                $stmt->close();
-                $conn->close();
-                ?>
-                <img src="<?php echo $picture; ?>" alt="Barangay Hall of Paule 1" width="80px" height="80px" onerror="this.style.display='none';">
-                <div class="adminname">
-                  <p class="p1"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-                  <p class="p2"><?php echo $userType; ?></p>
-                </div>
-              </div>
-              <hr>
-              <a href="UserProfile.php"><i class="bi bi-person"></i> Profile</a>
-              <a href="ForgotPassword.php"><i class="bi bi-key"></i> Reset Password</a>
-              <hr>
-              <a href="#" onclick="confirmLogout()"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-          </div>
-      </div>
-    </div>
-        <div class="navigation" id="navigation">
-          <div class="logo">
-            <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Barangay Logo" height="40px" width="40px">
-            <p>Barangay Records</p>
-          </div>
-          <div class="administrators">
-            <p><em> Administrator</em></p>
-          </div>
-          <a href="AdminDashboard.php" class="a1" id="dashb"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-          <a href="BarangayOfficial.php" class="a1"><i class="fas fa-users"></i> Barangay Officials</a>
-          <a href="Blotter.php" class="a1"><i class="fas fa-book"></i> Blotter</a>
-          <a href="Resident.php" class="a1"><i class="fas fa-users"></i> Residents</a>
-          <a href="DocumentRequest.php" class="a1" id="requests"><i class="fas fa-file"></i> Document Requests</a>
-          <a href="Users.php" class="a1"><i class="fas fa-users-cog"></i> Users</a>
-          <a href="Activity.php" class="a1"><i class="bi bi-activity"></i> Activity</a>
-          <div class="dropdown" onclick="toggleDropdown()">
-            <button class="btn btn-primary plus-toggle" type="button" id="dropdownMenuButton" >
-              <i class="fas fa-cog"></i>Page <i class="bi bi-plus"></i>
-            </button>
-            <div class="dropdown-content" id="dropdownContent">
-              <a href="Information.php"><i class="fas fa-chevron-right"></i>Information</a>
-              <a href="Forms.php"><i class="fas fa-chevron-right"></i>Forms</a>
-              <a href="BarangayFAQ.php"><i class="fas fa-chevron-right"></i>FAQ</a>
-              <a href="BarangayContact&Message.php" class="contact1"><i class="fas fa-chevron-right"></i>Contact</a>
+<div class="row g-4">
+    <!-- Recent residents -->
+    <div class="col-xl-7">
+        <div class="card h-100">
+            <div class="card-hd">
+                <span class="card-hd__title"><i class="bi bi-person-vcard"></i> Recent Residents</span>
+                <span class="spacer"></span>
+                <a class="btn btn-sm btn-outline-secondary" href="<?= page_url('Resident.php') ?>">View all</a>
             </div>
-          </div>           
-          <a href="#" onclick="confirmLogout()" class="a1"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+            <div class="table-wrap">
+                <table class="data">
+                    <thead><tr><th>Name</th><th>Age</th><th>Occupation</th><th>Contact</th></tr></thead>
+                    <tbody>
+                    <?php if (!$recentResidents): ?>
+                        <tr><td colspan="4"><div class="empty py-4"><i class="bi bi-inbox"></i>No residents yet.</div></td></tr>
+                    <?php else: foreach ($recentResidents as $r): ?>
+                        <tr>
+                            <td class="d-flex align-items-center gap-2">
+                                <img class="thumb" src="<?= upload_url('resident_photo/' . ($r['photo'] ?? '')) ?>"
+                                     alt="" onerror="this.src='<?= asset('images/logo1.png') ?>'">
+                                <span class="fw-semibold"><?= e($r['full_name']) ?></span>
+                            </td>
+                            <td><?= e((string) $r['age']) ?></td>
+                            <td><?= e($r['occupation']) ?></td>
+                            <td><?= e($r['contact']) ?></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </div>
+    </div>
 
-      <div class="title-with-icon">
-        <a href="AdminDashboard.php" title="Dashboard"><i class="bi bi-house"></i></a>
-        <p>Welcome, Admin.</p>
-      </div>
-
-      <div class="dashboard-box-container1" style="margin-left: 288px;">
-        <div class="dashboard-box1" style="margin-right: 20px; z-index: 0;" id="db1">
-            <?php
-            require __DIR__ . '/../../connection.php';
-            
-            $sql = "SELECT COUNT(*) AS totalOfficials FROM barangay_officials";
-            $result = $conn->query($sql);
-            
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $countOfficial = $row['totalOfficials'];
-            } else {
-                $countOfficial = 0;
-            }
-            $conn->close();
-            ?>
-          <div class="i"><i class="fas fa-landmark"></i></div>
-          <div class="box-title7"><p><?php echo $countOfficial; ?></p><h3>TOTAL BRGY. OFFICIALS</h3></div>
-          <div class="info"><a href="BarangayOfficial.php">More Info</a></div>
-      </div>
-        <div class="dashboard-box1" style="margin-right: 20px; z-index: 0;" id="db2">
-            <?php
-            require __DIR__ . '/../../connection.php';
-            
-            $sql = "SELECT COUNT(*) AS totalResidents FROM residents";
-            $result = $conn->query($sql);
-            
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $rowCount = $row['totalResidents'];
-            } else {
-                $rowCount = 0;
-            }
-            
-            $conn->close();
-            ?>
-            <div class="i"><i class="fas fa-map-marker-alt"></i></div>
-            <div class="box-title7"><p><?php echo $rowCount; ?></p><h3>TOTAL RESIDENTS</h3></div>
-            <div class="info"><a href="Residents.php">More Info</a></div>
+    <!-- Recent blotter -->
+    <div class="col-xl-5">
+        <div class="card h-100">
+            <div class="card-hd">
+                <span class="card-hd__title"><i class="bi bi-journal-text"></i> Recent Blotter</span>
+                <span class="spacer"></span>
+                <a class="btn btn-sm btn-outline-secondary" href="<?= page_url('Blotter.php') ?>">View all</a>
+            </div>
+            <div class="table-wrap">
+                <table class="data">
+                    <thead><tr><th>Complainant</th><th>Respondent</th><th>Status</th></tr></thead>
+                    <tbody>
+                    <?php if (!$recentBlotter): ?>
+                        <tr><td colspan="3"><div class="empty py-4"><i class="bi bi-inbox"></i>No blotter records.</div></td></tr>
+                    <?php else: foreach ($recentBlotter as $b): ?>
+                        <tr>
+                            <td class="fw-semibold"><?= e($b['complainant']) ?></td>
+                            <td><?= e($b['personToComplaint']) ?></td>
+                            <td><?= status_pill((string) $b['status']) ?></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="dashboard-box1" style="z-index: 0;" id="db3">
-            <?php
-              require __DIR__ . '/../../connection.php';
-                      
-              $sql = "SELECT COUNT(*) AS totalmessages FROM receivemessages ";
-              $result = $conn->query($sql);
-                      
-              if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $countreceivemessages = $row['totalmessages'];
-              } else {
-                $countreceivemessages = 0;
-              }
+    </div>
 
-              $conn->close();
-            ?>
-            <div class="i"><i class="fas fa-comment"></i></div>
-            <div class="box-title7"><p><?php echo $countreceivemessages; ?></p><h3>TOTAL MESSAGES</h3></div>
-            <div class="info"><a href="BarangayContact&Message.php">More Info</a></div>
+    <!-- Recent document requests -->
+    <div class="col-xl-7">
+        <div class="card h-100">
+            <div class="card-hd">
+                <span class="card-hd__title"><i class="bi bi-file-earmark-text"></i> Recent Document Requests</span>
+                <span class="spacer"></span>
+                <a class="btn btn-sm btn-outline-secondary" href="<?= page_url('DocumentRequest.php') ?>">View all</a>
+            </div>
+            <div class="table-wrap">
+                <table class="data">
+                    <thead><tr><th>Requested by</th><th>Certificate</th><th>Purpose</th><th>Date</th></tr></thead>
+                    <tbody>
+                    <?php if (!$recentRequests): ?>
+                        <tr><td colspan="4"><div class="empty py-4"><i class="bi bi-inbox"></i>No requests yet.</div></td></tr>
+                    <?php else: foreach ($recentRequests as $q): ?>
+                        <tr>
+                            <td class="fw-semibold"><?= e($q['fullName']) ?></td>
+                            <td><?= e($q['certificate_name'] ?? '—') ?></td>
+                            <td><?= e($q['purpose']) ?></td>
+                            <td><?= e($q['request_date'] ? date('M j, Y', strtotime((string) $q['request_date'])) : '—') ?></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </div>
-      <div class="dashboard-box-container2" style="margin-left: 288px;">
-        <div class="dashboard-box2" style="margin-right: 20px; z-index: 0;" id="db4">
-            <?php
-            require __DIR__ . '/../../connection.php';
-            
-            $sql = "SELECT COUNT(*) AS totalBlotter FROM blotterrecords";
-            $result = $conn->query($sql);
-            
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $countBlotter = $row['totalBlotter'];
-            } else {
-                $countBlotter = 0;
-            }
-            
-            $conn->close();
-            ?>
-            <div class="i"><i class="fas fa-gavel"></i></div>
-            <div class="box-title7"><p><?php echo $countBlotter; ?></p><h3>TOTAL BLOTTER</h3></div>
-            <div class="info"><a href="Blotter.php">More Info</a></div>
+    </div>
+
+    <!-- Recent activities -->
+    <div class="col-xl-5">
+        <div class="card h-100">
+            <div class="card-hd">
+                <span class="card-hd__title"><i class="bi bi-calendar-event"></i> Recent Activities</span>
+                <span class="spacer"></span>
+                <a class="btn btn-sm btn-outline-secondary" href="<?= page_url('Activity.php') ?>">View all</a>
+            </div>
+            <div class="card-bd stack">
+                <?php if (!$recentActivities): ?>
+                    <div class="empty py-4"><i class="bi bi-inbox"></i>No activities recorded.</div>
+                <?php else: foreach ($recentActivities as $a): ?>
+                    <div class="d-flex gap-3">
+                        <img class="thumb" style="width:48px;height:48px;border-radius:10px"
+                             src="<?= upload_url('activity_photos/' . ($a['photos'] ?? '')) ?>"
+                             alt="" onerror="this.src='<?= asset('images/logo1.png') ?>'">
+                        <div>
+                            <div class="fw-semibold"><?= e($a['activity']) ?></div>
+                            <div class="text-caption"><?= e($a['date'] ? date('M j, Y', strtotime((string) $a['date'])) : '') ?></div>
+                            <div class="small text-muted-2 text-truncate" style="max-width:22rem"><?= e($a['description']) ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; endif; ?>
+            </div>
         </div>
-        <div class="dashboard-box2" style="margin-right: 20px; z-index: 0;" id="db5">
-            <?php
-            require __DIR__ . '/../../connection.php';
-            
-            $sql = "SELECT COUNT(*) AS totalUsers FROM users";
-            $result = $conn->query($sql);
-            
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $countUsers = $row['totalUsers'];
-            } else {
-                $countUsers = 0;
-            }
-            
-            $conn->close();
-            ?>
-            <div class="i"><i class="fas fa-user-tie"></i></div>
-            <div class="box-title7"><p><?php echo $countUsers; ?></p><h3>TOTAL USERS</h3></div>
-            <div class="info"><a href="Users.php">More Info</a></div>
-        </div>
-        <div class="dashboard-box2" style="z-index: 0;" id="db6">
-            <?php
-            require __DIR__ . '/../../connection.php';
-            $sql = "SELECT COUNT(*) AS totalActivity FROM activity";
-            $result = $conn->query($sql);
-            
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $countActivity = $row['totalActivity'];
-            } else {
-                $countActivity = 0;
-            }
-            
-            $conn->close();
-            ?>
-            <div class="i"><i class="fas fa-running"></i></div>
-            <div class="box-title7"><p><?php echo $countActivity; ?></p><h3>TOTAL ACTIVITY</h3></div>
-            <div class="info"><a href="Activity.php">More Info</a></div>
-        </div>
-      </div>
+    </div>
+</div>
 
-      <?php
-        require __DIR__ . '/../../connection.php';
-            
-        $sql = "SELECT COUNT(*) AS totalOfficials FROM barangay_officials";
-        $result = $conn->query($sql);
-            
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $countOfficial = $row['totalOfficials'];
-        } else {
-            $countOfficial = 0;
-        }
-            
-        $conn->close();
-      ?>
-
-      <div class="dashboard" id="barangayOfficialsDashboard">
-        <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3 style="margin-right: 955px;">Barangay List Chart</h3>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-          <div class="show-entries">
-            <label for="entries">Show Entries: </label>
-            <input type="number" title="number" placeholder="0" value="<?php echo $countOfficial; ?>" readonly>
-          </div>    
-          <div class="search-bar">
-          <p>Search: </p><input type="text" id="searchInput" onkeyup="searchOfficial()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-        </div><hr>
-        <table class="table-no-border">
-            <thead>
-                <tr>
-                    <th>Photo</th>
-                    <th>Position</th>
-                    <th>Full Name </th>
-                    <th>Contact</th>
-                    <th>Address</th>
-                    <th>Start of Term</th>
-                    <th>End of Term </th>
-                </tr>
-            </thead>
-            <tbody>
-              <?php
-                  require __DIR__ . '/../../connection.php';
-
-                  if(isset($_GET['query'])) {
-                      $search_query = $_GET['query'];
-                      $sql = "SELECT * FROM barangay_officials WHERE fullName LIKE '%$search_query%'";
-                  } else {
-                      $sql = "SELECT * FROM barangay_officials";
-                  }
-
-                  $result = $conn->query($sql);
-
-                  if ($result->num_rows > 0) {
-                      while ($row = $result->fetch_assoc()) {
-                          echo "<tr>";
-                          echo"<td><img src='/BarangayManagementSystem-main/upload/photos/".$row['photo']."' alt='Photo' style='max-width: 70px; max-height: 70px; border-radius:50%'></td>";
-                          echo "<td>".$row['position']."</td>";
-                          echo "<td>".$row['fullName']."</td>";
-                          echo "<td>".$row['contact']."</td>";
-                          echo "<td>".$row['address']."</td>";
-                          echo "<td>".$row['startOfTerm']."</td>";
-                          echo "<td>".$row['endOfTerm']."</td>";
-                          echo "</tr>";
-                      }
-                  } else {
-                      echo "<tr><td colspan='8'>No records found</td></tr>";
-                  }
-
-                $conn->close();
-              ?>
-            </tbody>
-        </table>
-        <div class="navigation-buttons">
-          <p>Showing <?php echo $countOfficial; ?> of <?php echo $countOfficial; ?> entries.</p>
-        </div>
-      </div>
-      
-      <?php
-        require __DIR__ . '/../../connection.php';
-            
-        $sql = "SELECT COUNT(*) AS totalResidents FROM residents";
-        $result = $conn->query($sql);
-            
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $rowCount = $row['totalResidents'];
-        } else {
-            $rowCount = 0;
-        }
-
-        $conn->close();
-      ?>
-
-      <div class="dashboard" id="residentDashboard">
-        <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3>Resident List Chart</h3>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-          <div class="show-entries">
-            <label for="entries">Show Entries: </label>
-            <input type="number" title="number" placeholder="0" value="<?php echo $rowCount; ?>" readonly>
-          </div>    
-          <div class="search-bar">
-          <p>Search: </p><input type="text" id="searchInput1" onkeyup="searchResident()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-        </div><hr>
-        <table class="table-no-border">
-            <thead>
-                <tr>
-                  <th>Photo</th>
-                  <th>Name</th>
-                  <th>Age</th>
-                  <th>Occupation</th>
-                  <th>Address</th>
-                  <th>Contact</th>
-                </tr>
-            </thead>
-            <tbody>
-              <?php
-                  require __DIR__ . '/../../connection.php';
-
-                  $searchInput = ""; 
-
-                  $sql = "SELECT * FROM residents WHERE full_name LIKE '%$searchInput%'";
-                  $result = $conn->query($sql);
-
-                  if ($result->num_rows > 0) {
-                      while ($row = $result->fetch_assoc()) {
-                          echo "<tr>";
-                          echo "<td><img src='/BarangayManagementSystem-main/upload/resident_photo/" . ($row["photo"] ?? '') . "' alt='Photo' style='max-width: 70px; max-height: 70px; border-radius:50%'></td>";
-                          echo "<td>".$row['full_name']."</td>";
-                          echo "<td>".$row['age']."</td>";
-                          echo "<td>".$row['occupation']."</td>";
-                          echo "<td>".$row['birth_place']."</td>";
-                          echo "<td>".$row['contact']."</td>";
-                          echo "</tr>";
-                      }
-                  } else {
-                      echo "<tr><td colspan='7'>No matching records found</td></tr>";
-                  }
-
-                  $conn->close();
-              ?>
-            </tbody>
-        </table>
-        <div class="navigation-buttons">
-          <p>Showing <?php echo $rowCount; ?> of <?php echo $rowCount; ?> entries.</p>
-        </div>
-      </div>
-
-      <?php
-       require __DIR__ . '/../../connection.php';
-
-        $sql = "SELECT COUNT(*) AS totalBlotter FROM blotterrecords";
-        $result = $conn->query($sql);
-            
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $countBlotter = $row['totalBlotter'];
-        } else {
-            $countBlotter = 0;
-        }
-            
-        $conn->close();
-      ?>
-      
-      <div class="dashboard" id="blotterDashboard">
-        <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3>Blotter List Chart</h3>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-          <div class="show-entries">
-            <label for="entries">Show Entries: </label>
-            <input type="number" title="number" placeholder="0" value="<?php echo $countBlotter; ?>" readonly>
-          </div>    
-          <div class="search-bar">
-          <p>Search: </p><input type="text" id="searchInput2" onkeyup="searchBlotter()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-        </div><hr>
-        <table class="table-no-border">
-            <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Complainant</th>
-                  <th>Age</th>
-                  <th>Contact</th>
-                  <th>Person to Complaint</th>
-                  <th>Age</th>
-                  <th>Contact</th>
-                  <th>Action Taken</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php
-                require __DIR__ . '/../../connection.php';
-
-                $searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
-
-                $sql = "SELECT * FROM blotterrecords WHERE 
-                            status LIKE '%$searchTerm%' OR 
-                            complainant LIKE '%$searchTerm%' OR 
-                            personToComplaint LIKE '%$searchTerm%' OR 
-                            actionTaken LIKE '%$searchTerm%'";
-
-                $result = $conn->query($sql);
-
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>" . $row["status"] . "</td>";
-                        echo "<td>" . $row["complainant"] . "</td>";
-                        echo "<td>" . $row["age1"] . "</td>";
-                        echo "<td>" . $row["contact1"] . "</td>";
-                        echo "<td>" . $row["personToComplaint"] . "</td>";
-                        echo "<td>" . $row["age2"] . "</td>";
-                        echo "<td>" . $row["contact2"] . "</td>";
-                        echo "<td>" . $row["actionTaken"] . "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='9'>No Data Available</td></tr>";
-                }
-
-                $conn->close();
-            ?>
-            </tbody>
-        </table>
-        <div class="navigation-buttons">
-          <p>Showing <?php echo $countBlotter; ?> of <?php echo $countBlotter; ?> entries.</p>
-        </div>
-      </div>
-      
-      <?php
-        require __DIR__ . '/../../connection.php';
-
-        $sql = "SELECT COUNT(*) AS totalUsers FROM users";
-        $result = $conn->query($sql);
-                
-        if ($result->num_rows > 0) {
-          $row = $result->fetch_assoc();
-          $countUsers = $row['totalUsers'];
-        } else {
-          $countUsers = 0;
-        }
-        
-        $conn->close();
-      ?>
-
-      <div class="dashboard" id="usersDashboard">
-        <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3>Users List Chart</h3>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-          <div class="show-entries">
-            <label for="entries">Show Entries: </label>
-            <input type="number" title="number" placeholder="0" value="<?php echo $countUsers; ?>" readonly>
-          </div>    
-          <div class="search-bar">
-                <p>Search: </p><input type="text" id="searchInput3" onkeyup="searchUsers()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-        </div><hr>
-        <table class="table-no-border">
-            <thead>
-                <tr>
-                  <th>Full Name</th>
-                  <th>Email</th>
-                  <th>Password</th>
-                  <th>Type</th>
-                </tr>
-            </thead>
-            <tbody>
-              <?php
-                require __DIR__ . '/../../connection.php';
-
-                $searchInput = ""; 
-
-                $sql = "SELECT * FROM users WHERE fullName LIKE '%$searchInput%'";
-                $result = $conn->query($sql);
-
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td style='display: none;'>" . $row['id'] . "</td>"; 
-                        echo "<td style='width: 25%;'>" . $row["fullName"] . "</td>";
-                        echo "<td>" . $row["userName"] . "</td>";
-                        echo "<td>" . $row["password"] . "</td>";
-                        echo "<td>" . $row["userType"] . "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='5'>No matching records found</td></tr>";
-                }
-
-                $conn->close();
-              ?>
-            </tbody>
-        </table>
-        <div class="navigation-buttons">
-          <p>Showing <?php echo $countUsers; ?> of <?php echo $countUsers; ?> entries.</p>
-        </div>
-      </div>
-
-      <?php
-        require __DIR__ . '/../../connection.php';
-                
-        $sql = "SELECT COUNT(*) AS totalActivity FROM activity";
-        $result = $conn->query($sql);
-                
-        if ($result->num_rows > 0) {
-          $row = $result->fetch_assoc();
-          $countActivity = $row['totalActivity'];
-        } else {
-          $countActivity = 0;
-        }
-                
-        $conn->close();
-      ?>
-      
-      <div class="dashboard" id="activityDashboard">
-        <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3>Activity List Chart</h3>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-          <div class="show-entries">
-            <label for="entries">Show Entries: </label>
-            <input type="number" title="number" placeholder="0" value="<?php echo $countActivity; ?>" readonly>
-          </div>    
-          <div class="search-bar">
-            <input type="text" name="query" id="searchInput4" onkeyup="searchActivity()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-        </div><hr>
-        <table class="table-no-border">
-            <thead>
-                <tr>
-                  <th>Photos</th>
-                  <th>Date of Activity</th>
-                  <th>Activity Name</th>
-                  <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php
-          require __DIR__ . '/../../connection.php';
-
-          $sql = "SELECT * FROM activity";
-          $result = $conn->query($sql);
-
-          if ($result->num_rows > 0) {
-              while ($row = $result->fetch_assoc()) {
-                  if(isset($_GET['query'])) {
-                      $search_query = $_GET['query'];
-                      if (stripos($row['activity'], $search_query) !== false) {
-                          echo "<tr>";
-                          echo"<td><img src='/BarangayManagementSystem-main/upload/activity_photos/".$row['photos']."' alt='Photo' style='max-width: 70px; max-height: 70px; border-radius:50%'></td>";
-                          echo "<td>" . $row["date"] . "</td>";
-                          echo "<td>".$row['activity']."</td>";
-                          echo "<td>" . $row["description"] . "</td>";
-                          echo "</tr>";
-                      }
-                  } else {
-                      echo "<tr>";
-                      echo"<td><img src='/BarangayManagementSystem-main/upload/activity_photos/".$row['photos']."' alt='Photo' style='max-width: 70px; max-height: 70px; border-radius:50%'></td>";
-                      echo "<td>" . $row["date"] . "</td>";
-                      echo "<td>".$row['activity']."</td>";
-                      echo "<td>" . $row["description"] . "</td>";
-                      echo "</tr>";
-                  }
-              }
-          } else {
-              echo "<tr><td colspan='5'>No Data Available</td></tr>";
-          }
-
-          $conn->close();
-        ?>
-            </tbody>
-        </table>
-        <div class="navigation-buttons">
-          <p>Showing <?php echo $countActivity; ?> of <?php echo $countActivity; ?> entries.</p>
-        </div>
-      </div>
-      <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p>
-        </div>
-      </footer>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-euKpLsYQJz5jE0EEOxnTPI1a2ybp4QA9QfsB1LD73pI95/02djN3eVkD5bZlNumj" crossorigin="anonymous"></script>
-      <script src="/BarangayManagementSystem-main/frontend/assets/js/Admin.js"></script>
-      <script>
-        const hamburgerIcon = document.getElementById('hamburger');
-        const closeIcon = document.getElementById('closeIcon');
-        const navigation = document.getElementById('navigation');
-
-        hamburgerIcon.addEventListener('click', function() {
-          navigation.classList.toggle('show-navigation');
-          hamburgerIcon.style.display = 'none';
-          closeIcon.style.display = 'block';
-        });
-
-        closeIcon.addEventListener('click', function() {
-          navigation.classList.toggle('show-navigation');
-          closeIcon.style.display = 'none';
-          hamburgerIcon.style.display = 'block';
-        });
-
-        function searchOfficial() {
-        var input = document.getElementById("searchInput").value.toLowerCase();
-        var tableRows = document.querySelectorAll("#barangayOfficialsDashboard tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-            var cells = row.getElementsByTagName("td");
-            var found = false;
-
-            Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function searchResident() {
-        var input = document.getElementById("searchInput1").value.toLowerCase();
-        var tableRows = document.querySelectorAll("#residentDashboard tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-            var cells = row.getElementsByTagName("td");
-            var found = false;
-
-            Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function searchBlotter() {
-        var input = document.getElementById("searchInput2").value.toLowerCase();
-        var tableRows = document.querySelectorAll("#blotterDashboard tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-            var cells = row.getElementsByTagName("td");
-            var found = false;
-
-            Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function searchUsers() {
-        var input = document.getElementById("searchInput3").value.toLowerCase();
-        var tableRows = document.querySelectorAll("#usersDashboard tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-            var cells = row.getElementsByTagName("td");
-            var found = false;
-
-            Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function searchActivity() {
-        var input = document.getElementById("searchInput4").value.toLowerCase();
-        var tableRows = document.querySelectorAll("#activityDashboard tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-            var cells = row.getElementsByTagName("td");
-            var found = false;
-
-            Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Are you sure you want to log out?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, log out',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = 'AdminDashboard.php?logout=true';
-            }
-        });
-    }
-      </script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../partials/admin_bottom.php'; ?>
