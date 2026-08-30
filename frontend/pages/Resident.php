@@ -6,7 +6,7 @@
  * Delete (AJAX GET) -> backend/actions/resident_delete.php?id=
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['official', 'sk_chairman']);
 
 $pdo = db();
 
@@ -47,7 +47,10 @@ $page_title   = 'Residents';
 $page_heading = 'Barangay Residents';
 $page_subtitle = $total . ' registered resident' . ($total === 1 ? '' : 's');
 $active_nav   = 'residents';
-$page_actions = '<button class="btn btn-primary" onclick="openResident()"><i class="bi bi-plus-lg me-1"></i>Add Resident</button>';
+$canManage    = is_admin() || current_role() === 'official';
+$page_actions = $canManage
+    ? '<button class="btn btn-primary" onclick="openResident()"><i class="bi bi-plus-lg me-1"></i>Add Resident</button>'
+    : '';
 
 require __DIR__ . '/../partials/admin_top.php';
 ?>
@@ -102,12 +105,31 @@ require __DIR__ . '/../partials/admin_top.php';
                     <td><?= e($r['occupation'] ?: '—') ?></td>
                     <td><?= e($r['contact'] ?: '—') ?></td>
                     <td class="col-actions">
+                        <?= view_button([
+                            'Full name'        => $r['full_name'],
+                            'Age'              => $r['age'],
+                            'Birth date'       => $r['birth_date'],
+                            'Birth place'      => $r['birth_place'],
+                            'Gender'           => $r['gender'],
+                            'Civil status'     => $r['civil_status'],
+                            'Blood type'       => $r['blood_type'],
+                            'Contact'          => $r['contact'],
+                            'Occupation'       => $r['occupation'],
+                            'Monthly income'   => $r['monthly_income'],
+                            'Household'        => $r['household'],
+                            'Length of stay'   => $r['length_of_stay'],
+                            'Religion'         => $r['religion'],
+                            'Nationality'      => $r['nationality'],
+                            'Education'        => $r['education'],
+                        ], 'Resident details') ?>
+                        <?php if ($canManage): ?>
                         <button class="btn btn-sm btn-light btn-icon" title="Edit"
                                 onclick="editResident(this)"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
                                 onclick="deleteResident(<?= (int) $r['id'] ?>, '<?= e($r['full_name']) ?>')">
                             <i class="bi bi-trash"></i>
                         </button>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; endif; ?>

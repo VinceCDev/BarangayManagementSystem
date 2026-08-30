@@ -6,7 +6,7 @@
  * Delete -> backend/actions/forms_delete.php (POST delete_id)
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['treasurer']);
 
 $pdo = db();
 
@@ -32,7 +32,10 @@ $page_title    = 'Certificates';
 $page_heading  = 'Certificate Templates';
 $page_subtitle = $total . ' template' . ($total === 1 ? '' : 's');
 $active_nav    = 'forms';
-$page_actions  = '<button class="btn btn-primary" onclick="openForm()"><i class="bi bi-plus-lg me-1"></i>Add Template</button>';
+$canManage     = is_admin();
+$page_actions  = $canManage
+    ? '<button class="btn btn-primary" onclick="openForm()"><i class="bi bi-plus-lg me-1"></i>Add Template</button>'
+    : '';
 
 require __DIR__ . '/../partials/admin_top.php';
 ?>
@@ -69,9 +72,17 @@ require __DIR__ . '/../partials/admin_top.php';
                         <?php else: ?><span class="text-caption">No file</span><?php endif; ?>
                     </td>
                     <td class="col-actions">
+                        <?= view_button([
+                            'Certificate'  => $r['certificate_name'],
+                            'Requirements' => $r['requirements'],
+                            'Template file'=> $r['file'] ?: '—',
+                            'Added'        => $r['created_at'] ?? '',
+                        ], 'Certificate template') ?>
+                        <?php if ($canManage): ?>
                         <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editForm(this)"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
                                 onclick="deleteForm(<?= (int) $r['id'] ?>, '<?= e($r['certificate_name']) ?>')"><i class="bi bi-trash"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; endif; ?>

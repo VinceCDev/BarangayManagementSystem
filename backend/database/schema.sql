@@ -261,6 +261,28 @@ CREATE TABLE IF NOT EXISTS `proof_of_identity` (
 
 
 -- ----------------------------------------------------------------------------
+--  tasks — work items assigned to officials / SK / treasurer
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `tasks` (
+    `id`             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `title`          VARCHAR(200) NOT NULL,
+    `description`    TEXT         DEFAULT NULL,
+    `assignee_email` VARCHAR(190) DEFAULT NULL COMMENT 'users.userName of the person responsible',
+    `assignee_name`  VARCHAR(190) DEFAULT NULL,
+    `assignee_role`  VARCHAR(40)  DEFAULT NULL,
+    `status`         VARCHAR(20)  NOT NULL DEFAULT 'Pending' COMMENT 'Pending / In Progress / Done',
+    `priority`       VARCHAR(20)  NOT NULL DEFAULT 'Normal'  COMMENT 'Low / Normal / High',
+    `due_date`       DATE         DEFAULT NULL,
+    `created_by`     VARCHAR(190) DEFAULT NULL,
+    `created_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_tasks_assignee` (`assignee_email`),
+    KEY `idx_tasks_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ----------------------------------------------------------------------------
 --  Public "General Information" content blocks (one editable row each)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `introduction` (

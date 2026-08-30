@@ -5,7 +5,14 @@
  * links to the full management page.
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_admin();                       // any signed-in user (handles login + logout)
+
+// Residents have their own dashboard.
+if (current_role() === 'resident') {
+    header('Location: ' . page_url('ResidentDashboard.php'));
+    exit;
+}
+require_role(['official', 'sk_chairman', 'treasurer']);
 
 $pdo = db();
 
@@ -15,13 +22,15 @@ $countOf = static function (string $table) use ($pdo): int {
     return (int) $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
 };
 
-$stats = [
-    ['label' => 'Barangay Officials', 'value' => $countOf('barangay_officials'), 'icon' => 'bi-people',            'href' => 'BarangayOfficial.php',        'mod' => ''],
-    ['label' => 'Residents',          'value' => $countOf('residents'),          'icon' => 'bi-person-vcard',      'href' => 'Resident.php',                'mod' => 'stat--green'],
-    ['label' => 'Blotter Records',    'value' => $countOf('blotterrecords'),     'icon' => 'bi-journal-text',      'href' => 'Blotter.php',                 'mod' => 'stat--red'],
-    ['label' => 'Document Requests',  'value' => $countOf('document_requests'),  'icon' => 'bi-file-earmark-text', 'href' => 'DocumentRequest.php',         'mod' => 'stat--gold'],
-    ['label' => 'Activities',         'value' => $countOf('activity'),           'icon' => 'bi-calendar-event',    'href' => 'Activity.php',                'mod' => 'stat--teal'],
+$allStats = [
+    ['key' => 'officials', 'label' => 'Barangay Officials', 'value' => $countOf('barangay_officials'), 'icon' => 'bi-people',            'href' => 'BarangayOfficial.php', 'mod' => ''],
+    ['key' => 'residents', 'label' => 'Residents',          'value' => $countOf('residents'),          'icon' => 'bi-person-vcard',      'href' => 'Resident.php',         'mod' => 'stat--green'],
+    ['key' => 'blotter',   'label' => 'Blotter Records',    'value' => $countOf('blotterrecords'),     'icon' => 'bi-journal-text',      'href' => 'Blotter.php',          'mod' => 'stat--red'],
+    ['key' => 'requests',  'label' => 'Document Requests',  'value' => $countOf('document_requests'),  'icon' => 'bi-file-earmark-text', 'href' => 'DocumentRequest.php',  'mod' => 'stat--gold'],
+    ['key' => 'tasks',     'label' => 'Open Tasks',         'value' => (int) $pdo->query("SELECT COUNT(*) FROM tasks WHERE status <> 'Done'")->fetchColumn(), 'icon' => 'bi-check2-square', 'href' => 'Tasks.php', 'mod' => 'stat--violet'],
+    ['key' => 'activity',  'label' => 'Activities',         'value' => $countOf('activity'),           'icon' => 'bi-calendar-event',    'href' => 'Activity.php',         'mod' => 'stat--teal'],
 ];
+$stats = array_values(array_filter($allStats, static fn ($s) => role_can($s['key'])));
 
 $recentResidents = $pdo->query(
     'SELECT photo, full_name, age, occupation, contact FROM residents ORDER BY id DESC LIMIT 6'
@@ -78,6 +87,7 @@ require __DIR__ . '/../partials/admin_top.php';
 
 <div class="row g-4">
     <!-- Recent residents -->
+    <?php if (role_can('residents')): ?>
     <div class="col-xl-7">
         <div class="card h-100">
             <div class="card-hd">
@@ -108,8 +118,10 @@ require __DIR__ . '/../partials/admin_top.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Recent blotter -->
+    <?php if (role_can('blotter')): ?>
     <div class="col-xl-5">
         <div class="card h-100">
             <div class="card-hd">
@@ -135,8 +147,10 @@ require __DIR__ . '/../partials/admin_top.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Recent document requests -->
+    <?php if (role_can('requests')): ?>
     <div class="col-xl-7">
         <div class="card h-100">
             <div class="card-hd">
@@ -163,8 +177,10 @@ require __DIR__ . '/../partials/admin_top.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Recent activities -->
+    <?php if (role_can('activity')): ?>
     <div class="col-xl-5">
         <div class="card h-100">
             <div class="card-hd">
@@ -190,6 +206,7 @@ require __DIR__ . '/../partials/admin_top.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <?php require __DIR__ . '/../partials/admin_bottom.php'; ?>

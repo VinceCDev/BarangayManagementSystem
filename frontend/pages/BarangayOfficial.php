@@ -6,7 +6,7 @@
  * Delete (AJAX GET) -> backend/actions/barangay_official_delete.php?id=
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['official', 'sk_chairman', 'treasurer']);
 
 $pdo = db();
 
@@ -43,7 +43,9 @@ $page_title    = 'Barangay Officials';
 $page_heading  = 'Barangay Officials';
 $page_subtitle = $total . ' official' . ($total === 1 ? '' : 's');
 $active_nav    = 'officials';
-$page_actions  = '<button class="btn btn-primary" onclick="openOfficial()"><i class="bi bi-plus-lg me-1"></i>Add Official</button>';
+$page_actions  = is_admin()
+    ? '<button class="btn btn-primary" onclick="openOfficial()"><i class="bi bi-plus-lg me-1"></i>Add Official</button>'
+    : '';
 
 require __DIR__ . '/../partials/admin_top.php';
 ?>
@@ -82,9 +84,19 @@ require __DIR__ . '/../partials/admin_top.php';
                     <td><?= e($r['contact'] ?: '—') ?></td>
                     <td><?= e(($r['startOfTerm'] ?: '—') . ' – ' . ($r['endOfTerm'] ?: '—')) ?></td>
                     <td class="col-actions">
+                        <?= view_button([
+                            'Full name'     => $r['fullName'],
+                            'Position'      => $r['position'],
+                            'Contact'       => $r['contact'],
+                            'Address'       => $r['address'],
+                            'Start of term' => $r['startOfTerm'],
+                            'End of term'   => $r['endOfTerm'],
+                        ], 'Official details') ?>
+                        <?php if (is_admin()): ?>
                         <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editOfficial(this)"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
                                 onclick="deleteOfficial(<?= (int) $r['id'] ?>, '<?= e($r['fullName']) ?>')"><i class="bi bi-trash"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; endif; ?>

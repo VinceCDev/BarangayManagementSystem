@@ -8,11 +8,11 @@
  * The password hash is never displayed.
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role([]);   // administrators only
 
 $pdo = db();
 
-$types = ['admin' => 'Administrator', 'staff' => 'Staff'];
+$types = roles_all();   // admin / official / sk_chairman / treasurer / resident
 
 $search  = trim($_GET['search'] ?? '');
 $fRole   = $_GET['role'] ?? '';

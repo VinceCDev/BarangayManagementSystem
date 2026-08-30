@@ -456,6 +456,22 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .modal-dialog-scrollable .modal-content > form > .modal-footer { flex-shrink: 0; }
 .modal-dialog-scrollable .modal-content > form > .modal-body { overflow-y: auto; }
 
+/* Read-only detail list used by the shared "View" modal */
+.detail-list { display: grid; grid-template-columns: 40% 60%; gap: 0; margin: 0; }
+.detail-list dt {
+    padding: .6rem .75rem .6rem 0;
+    font-weight: 600; font-size: .82rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .02em;
+    border-bottom: 1px solid var(--line-soft);
+}
+.detail-list dd {
+    padding: .6rem 0;
+    margin: 0; color: var(--ink); font-size: .92rem;
+    border-bottom: 1px solid var(--line-soft);
+    word-break: break-word;
+}
+.detail-list dt:last-of-type, .detail-list dd:last-of-type { border-bottom: 0; }
+
 /* 6. ───────────────────────────────────────────────  PUBLIC SITE  ─────── */
 
 /* Thin "official portal" utility strip above the nav */

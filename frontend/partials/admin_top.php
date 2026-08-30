@@ -18,8 +18,10 @@ $page_subtitle = $page_subtitle ?? '';
 $page_actions  = $page_actions  ?? '';
 $active_nav    = $active_nav    ?? '';
 $head_extra    = $head_extra    ?? '';
-$nav           = require __DIR__ . '/nav.php';
+require_once __DIR__ . '/nav.php';                // defines nav_for_role()
+$nav           = nav_for_role(current_role());   // menu filtered by role
 $user          = current_user_card();
+$dash_url      = page_url(current_role() === 'resident' ? 'ResidentDashboard.php' : 'AdminDashboard.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,7 +47,7 @@ $user          = current_user_card();
         <img src="<?= asset('images/logo1.png') ?>" alt="Barangay Paule 1 seal">
         <span>
             <b>Barangay Paule 1</b>
-            <span>Management System</span>
+            <span><?= e(role_label()) ?></span>
         </span>
     </div>
     <nav class="app-nav" aria-label="Main">
@@ -93,7 +95,7 @@ $user          = current_user_card();
     <div class="page-head">
         <div class="page-head__text">
             <div class="crumb">
-                <a href="<?= page_url('AdminDashboard.php') ?>">Dashboard</a>
+                <a href="<?= $dash_url ?>">Dashboard</a>
                 <?php if ($active_nav !== 'dashboard'): ?> <span class="mx-1">/</span> <?= e($page_heading) ?><?php endif; ?>
             </div>
             <h1><?= e($page_heading) ?></h1>

@@ -6,7 +6,7 @@
  * Delete (AJAX GET) -> backend/actions/activity_delete.php?id=
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['official', 'sk_chairman', 'treasurer']);
 
 $pdo = db();
 

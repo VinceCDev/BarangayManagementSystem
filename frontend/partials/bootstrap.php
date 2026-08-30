@@ -55,6 +55,112 @@ function require_admin(): void
     require_login(page_url('Login.php'));
 }
 
+/* ===========================================================================
+ *  Roles / access control
+ * ------------------------------------------------------------------------- */
+
+/** Every role slug -> human label. */
+function roles_all(): array
+{
+    return [
+        'admin'       => 'System Administrator',
+        'official'    => 'Barangay Official',
+        'sk_chairman' => 'SK Chairman',
+        'treasurer'   => 'Barangay Treasurer',
+        'resident'    => 'Resident',
+    ];
+}
+
+/**
+ * The signed-in user's role slug, read from users.userType.
+ * Legacy values ('admin' / 'staff' / '') map to 'admin'; anything unknown
+ * falls back to 'resident'.
+ */
+function current_role(): string
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+    $role  = 'resident';
+    $email = current_username();
+    if ($email) {
+        try {
+            $st = db()->prepare('SELECT userType FROM users WHERE userName = ? LIMIT 1');
+            $st->execute([$email]);
+            $t = strtolower(trim((string) $st->fetchColumn()));
+            $role = match ($t) {
+                'admin', 'staff', ''              => 'admin',
+                'official', 'barangay_official'   => 'official',
+                'sk', 'sk_chairman', 'sk_chairperson' => 'sk_chairman',
+                'treasurer', 'barangay_treasurer' => 'treasurer',
+                default => array_key_exists($t, roles_all()) ? $t : 'resident',
+            };
+        } catch (Throwable $e) {
+            error_log('current_role: ' . $e->getMessage());
+        }
+    }
+    return $cache = $role;
+}
+
+/** @return string Human label for a role (defaults to the current user's). */
+function role_label(?string $slug = null): string
+{
+    return roles_all()[$slug ?? current_role()] ?? 'User';
+}
+
+function is_admin(): bool { return current_role() === 'admin'; }
+
+/** True if the current role has the given nav key in its filtered menu. */
+function role_can(string $navKey): bool
+{
+    require_once __DIR__ . '/nav.php';
+    foreach (nav_for_role(current_role()) as $items) {
+        foreach ($items as $it) {
+            if ($it['key'] === $navKey) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Page guard: allow only these roles (admin is always allowed). Also runs the
+ * login / logout handling from require_admin().
+ */
+function require_role(array $allowed): void
+{
+    require_admin();
+    if (current_role() !== 'admin' && !in_array(current_role(), $allowed, true)) {
+        http_response_code(403);
+        exit('<div style="font:15px/1.6 system-ui;padding:4rem;text-align:center;color:#33414f">'
+            . '<h2 style="margin:0 0 .5rem">Access denied</h2>'
+            . '<p>Your account role does not have access to this page.</p>'
+            . '<a href="' . page_url('AdminDashboard.php') . '" style="color:#1450b5">Return to dashboard</a></div>');
+    }
+}
+
+/* ===========================================================================
+ *  Reusable "View" button + modal
+ * ------------------------------------------------------------------------- */
+
+/**
+ * A read-only "view" icon button for a table row. Pass an ordered map of
+ * label => value; clicking opens the shared #viewModal (rendered by
+ * admin_bottom.php) with those details.
+ */
+function view_button(array $fields, string $title = 'Details'): string
+{
+    $payload = json_encode(
+        ['title' => $title, 'fields' => array_map(static fn ($v) => (string) $v, $fields)],
+        JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+    );
+    return '<button type="button" class="btn btn-sm btn-light btn-icon" title="View" '
+         . "onclick=\"showView(this)\" data-view='" . e($payload) . "'>"
+         . '<i class="bi bi-eye"></i></button>';
+}
+
 /**
  * Fetch the signed-in user's display info for the top bar.
  * Returns name, role and avatar URL (with sensible fallbacks).
@@ -78,11 +184,7 @@ function current_user_card(): array
             }
         }
 
-        $st = db()->prepare('SELECT userType FROM users WHERE userName = ? LIMIT 1');
-        $st->execute([$email]);
-        if ($u = $st->fetch()) {
-            $out['role'] = ucfirst((string) ($u['userType'] ?: 'staff'));
-        }
+        $out['role'] = role_label();
 
         $st = db()->prepare(
             'SELECT picture FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?) LIMIT 1'

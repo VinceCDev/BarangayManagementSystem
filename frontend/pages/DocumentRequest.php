@@ -4,7 +4,7 @@
  * Each row links to the generated PDF via backend/actions/service_pdf.php.
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['official', 'treasurer']);
 
 $pdo = db();
 
@@ -80,10 +80,23 @@ require __DIR__ . '/../partials/admin_top.php';
                     <td class="text-truncate" style="max-width:16rem"><?= e($r['purpose'] ?: '—') ?></td>
                     <td><?= e($r['request_date'] ? date('M j, Y', strtotime((string) $r['request_date'])) : '—') ?></td>
                     <td class="col-actions">
+                        <?= view_button([
+                            'Requested by'  => $r['fullName'],
+                            'Certificate'   => $r['certificate_name'] ?? '—',
+                            'Purpose'       => $r['purpose'],
+                            'Address'       => $r['address'],
+                            'Date of birth' => $r['dob'],
+                            'Place of birth'=> $r['placeOfBirth'],
+                            'Civil status'  => $r['civilStatus'],
+                            'Sex'           => $r['sex'],
+                            'Email'         => $r['email'],
+                            'Business'      => $r['business'] ?: '—',
+                            'Date requested'=> $r['request_date'],
+                        ], 'Request details') ?>
                         <a class="btn btn-sm btn-outline-secondary" target="_blank"
-                           href="<?= $pdfUrl ?>?id=<?= (int) $r['id'] ?>&action=view"><i class="bi bi-eye me-1"></i>View</a>
+                           href="<?= $pdfUrl ?>?id=<?= (int) $r['id'] ?>&action=view"><i class="bi bi-eye me-1"></i>PDF</a>
                         <a class="btn btn-sm btn-outline-secondary"
-                           href="<?= $pdfUrl ?>?id=<?= (int) $r['id'] ?>&action=download"><i class="bi bi-download me-1"></i>PDF</a>
+                           href="<?= $pdfUrl ?>?id=<?= (int) $r['id'] ?>&action=download"><i class="bi bi-download me-1"></i>Save</a>
                     </td>
                 </tr>
             <?php endforeach; endif; ?>

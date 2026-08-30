@@ -6,7 +6,7 @@
  * Delete (AJAX GET) -> backend/actions/blotter_delete.php?id=
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['official']);
 
 $pdo = db();
 
@@ -51,7 +51,10 @@ $page_title    = 'Blotter';
 $page_heading  = 'Blotter Records';
 $page_subtitle = $total . ' record' . ($total === 1 ? '' : 's');
 $active_nav    = 'blotter';
-$page_actions  = '<button class="btn btn-primary" onclick="openBlotter()"><i class="bi bi-plus-lg me-1"></i>New Record</button>';
+$canManage     = is_admin() || current_role() === 'official';
+$page_actions  = $canManage
+    ? '<button class="btn btn-primary" onclick="openBlotter()"><i class="bi bi-plus-lg me-1"></i>New Record</button>'
+    : '';
 
 require __DIR__ . '/../partials/admin_top.php';
 ?>
@@ -93,9 +96,24 @@ require __DIR__ . '/../partials/admin_top.php';
                     </td>
                     <td class="text-truncate" style="max-width:22rem"><?= e($r['actionTaken'] ?: '—') ?></td>
                     <td class="col-actions">
+                        <?= view_button([
+                            'Status'                => $r['status'],
+                            'Complainant'           => $r['complainant'],
+                            'Complainant age'       => $r['age1'],
+                            'Complainant address'   => $r['address1'],
+                            'Complainant contact'   => $r['contact1'],
+                            'Respondent'            => $r['personToComplaint'],
+                            'Respondent age'        => $r['age2'],
+                            'Respondent address'    => $r['address2'],
+                            'Respondent contact'    => $r['contact2'],
+                            'Action taken'          => $r['actionTaken'],
+                            'Filed'                 => $r['created_at'] ?? '',
+                        ], 'Blotter record') ?>
+                        <?php if ($canManage): ?>
                         <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editBlotter(this)"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
                                 onclick="deleteBlotter(<?= (int) $r['id'] ?>, '<?= e($r['complainant']) ?>')"><i class="bi bi-trash"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; endif; ?>

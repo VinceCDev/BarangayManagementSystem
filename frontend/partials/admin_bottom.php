@@ -9,6 +9,24 @@ $foot_extra = $foot_extra ?? '';
   </div><!-- /.container-inner -->
 </main>
 
+<!-- Shared read-only "View" modal (populated by view_button() / showView()) -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewModalTitle">Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-list" id="viewModalBody"></dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Highlight active nav item even when a page forgot to set $active_nav.
@@ -20,6 +38,23 @@ $foot_extra = $foot_extra ?? '';
             }
         });
     })();
+
+    // Populate + open the shared read-only View modal.
+    var _viewModal;
+    function showView(btn) {
+        var data = JSON.parse(btn.dataset.view);
+        document.getElementById('viewModalTitle').textContent = data.title || 'Details';
+        var dl = document.getElementById('viewModalBody');
+        dl.innerHTML = '';
+        Object.keys(data.fields).forEach(function (label) {
+            var val = data.fields[label];
+            var dt = document.createElement('dt');  dt.textContent = label;
+            var dd = document.createElement('dd');  dd.textContent = (val === '' || val == null) ? '—' : val;
+            dl.appendChild(dt); dl.appendChild(dd);
+        });
+        _viewModal = _viewModal || new bootstrap.Modal('#viewModal');
+        _viewModal.show();
+    }
 
     // Confirm before signing out.
     function confirmLogout(e) {

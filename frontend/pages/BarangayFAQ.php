@@ -6,7 +6,7 @@
  * Delete -> backend/actions/faq1_delete.php (POST delete_id)
  */
 require __DIR__ . '/../partials/bootstrap.php';
-require_admin();
+require_role(['official']);
 
 $pdo = db();
 

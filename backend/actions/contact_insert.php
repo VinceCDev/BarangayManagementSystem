@@ -12,7 +12,11 @@ use PHPMailer\PHPMailer\Exception as MailException;
 require __DIR__ . '/../../connection.php';                 // db(), constants
 $config = require __DIR__ . '/../config/config.php';
 
-$back = PAGES_URL . '/Contact.php';
+// Return to Contact.php by default, or MyMessages.php when a resident sends
+// from their portal (whitelisted — never trust an arbitrary redirect target).
+$return = in_array($_POST['_return'] ?? '', ['MyMessages.php', 'Contact.php'], true)
+    ? $_POST['_return'] : 'Contact.php';
+$back = PAGES_URL . '/' . $return;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . $back);
