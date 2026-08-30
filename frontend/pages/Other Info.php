@@ -1,184 +1,32 @@
 <?php
-  session_start();
+/** Other Info.php — step 2 of profile setup. Posts to important_info_insert.php. */
+require __DIR__ . '/../partials/bootstrap.php';
 
-  if (!isset($_SESSION['username'])) {
-      header("Location: Login.php");
-      exit;
-  }
-
-  if (isset($_GET['logout'])) {
-      session_destroy();
-
-      header("Location: Login.php");
-      exit;
-  }
+$page_title = 'Other information';
+$step       = 2;
+$step_title = 'Other information';
+$step_hint  = 'Address, work and household details.';
+require __DIR__ . '/../partials/onboarding_top.php';
 ?>
-<!DOCTYPE html> 
-<html lang="en">
-<head> 
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile | Other Information</title>
-    <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-    <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/Other Info.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://unpkg.com/sweetalert2@11"></script>
-    <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        .number::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: calc(100% + 10px); 
-            transform: translateY(-50%);
-            width: 335px; 
-            height: 1px; 
-            background-color: black; 
-        }
 
-        .number:last-child::after {
-            display: none; 
-        }
-    </style>
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css">
-</head> 
-<body>
-    <section class="contact">
-        <h3 class="h31">Profile Data</h3>
-        <div class="container">
-            <div class="numbers">
-                <span class="number first-child">
-                    1
-                    <p>Personal Data</p>
-                </span>
-                <span class="number">2<p>Other Information
-                </p></span>
-                <span class="number">3<p>Proof of Identity</p></span>
-            </div>
-            <form id="personalDataForm" action="/BarangayManagementSystem-main/backend/actions/important_info_insert.php" method="POST">
-                <div class="form-group">
-                    <div class="input-group">
-                        <label for="address">House Number/Street</label>
-                        <input type="text" id="address" name="address" placeholder="House/Unit Number, Street" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="barangay">Barangay</label>
-                        <input type="text" id="barangay" name="barangay" placeholder="Barangay" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="input-group">
-                        <label for="city">City/Municipality</label>
-                        <input type="text" id="city" name="city" placeholder="City/Municipality" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="province">Province</label>
-                        <input type="text" id="province" name="province" placeholder="Province" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="input-group">
-                        <label for="occupation">Occupation</label>
-                        <input type="text" id="occupation" name="occupation" placeholder="Occupation" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="monthly_income">Monthly Income</label>
-                        <input type="number" id="monthly_income" name="monthly_income" placeholder="Monthly Income" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="input-group">
-                        <label for="number_of_years">Length of Stay</label>
-                        <input type="number" id="number_of_years" name="number_of_years" placeholder="Relationship to Resident" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="number_household">Number per Household</label>
-                        <input type="number" id="number_household" name="number_household" placeholder="Number per Household" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="input-group">
-                        <label for="allergies_conditions">Allergies or Medical Conditions</label>
-                        <input type="text" id="allergies_conditions" name="allergies_conditions" placeholder="Allergies or Medical Conditions">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="input-group">
-                        <label for="education">Educational Attainment</label>
-                        <input type="text" id="education" name="education" placeholder="Educational Attainment" required>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <button type="button" class="btn btn-secondary" onclick="redirectToPreviousPage()">
-                        <i class="bi bi-arrow-left"></i> Back
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="submitFormData()">
-                        Next <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
-            </form>            
-        </div>          
-    </section>
-    <footer> 
-        <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p> 
-    </footer>
-    <script>
-        function submitFormData() {
-            const isValid = validateForm();
-            if (isValid) {
-                const formData = new FormData(document.getElementById('personalDataForm'));
+<form method="POST" action="<?= action_url('important_info_insert.php') ?>" class="row g-3">
+    <div class="col-md-6"><label class="form-label">House / unit no. and street</label><input class="form-control" name="address" required></div>
+    <div class="col-md-6"><label class="form-label">Barangay</label><input class="form-control" name="barangay" value="Paule 1" required></div>
+    <div class="col-md-6"><label class="form-label">City / municipality</label><input class="form-control" name="city" value="Rizal" required></div>
+    <div class="col-md-6"><label class="form-label">Province</label><input class="form-control" name="province" value="Laguna" required></div>
 
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '/BarangayManagementSystem-main/backend/actions/important_info_insert.php', true);
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        console.log(xhr.responseText);
-                        window.location.href = "Proof of Identity.php"; // Redirect to Important_Info.php
-                    } else {
-                        console.error('Error:', xhr.statusText); 
-                    }
-                };
-                xhr.onerror = function() {
-                    console.error('Request failed');
-                };
-                xhr.send(formData);
-            }
-        }
-        
-        function redirectToPreviousPage() {
-            window.location.href = "Personal Data.php";
-        }   
+    <div class="col-12"><hr></div>
+    <div class="col-md-6"><label class="form-label">Occupation</label><input class="form-control" name="occupation" required></div>
+    <div class="col-md-6"><label class="form-label">Monthly income</label><input type="number" min="0" class="form-control" name="monthly_income" required></div>
+    <div class="col-md-6"><label class="form-label">Years of residency</label><input type="number" min="0" class="form-control" name="number_of_years" required></div>
+    <div class="col-md-6"><label class="form-label">Members per household</label><input type="number" min="0" class="form-control" name="number_household" required></div>
+    <div class="col-md-6"><label class="form-label">Educational attainment</label><input class="form-control" name="education" required></div>
+    <div class="col-md-6"><label class="form-label">Allergies / medical conditions</label><input class="form-control" name="allergies_conditions" placeholder="None"></div>
 
-        function validateForm() {
-            // Get all input fields
-            const inputs = document.querySelectorAll('#personalDataForm input, #personalDataForm select');
-            let isValid = true; // Set initial validation flag to true
-            for (let i = 0; i < inputs.length; i++) {
-                // Check if any field is empty
-                if (!inputs[i].value) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Please fill out all the required fields',
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer);
-                            toast.addEventListener('mouseleave', Swal.resumeTimer);
-                        }
-                    });
-                    isValid = false; // Set validation flag to false
-                    break; // Exit loop if any field is empty
-                }
-            }
-            return isValid; // Return validation flag
-        }
-    </script>
-    <script src="/BarangayManagementSystem-main/frontend/assets/js/index.js"></script> 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body> 
-</html>
+    <div class="col-12 d-flex justify-content-between">
+        <a class="btn btn-outline-secondary" href="<?= page_url('Personal Data.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <button class="btn btn-primary">Continue <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>
+</form>
+
+<?php require __DIR__ . '/../partials/onboarding_bottom.php'; ?>

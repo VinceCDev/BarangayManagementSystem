@@ -1,42 +1,43 @@
 <?php
-// Check if the form is submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    require __DIR__ . '/../../connection.php';
+/**
+ * personal_data_insert.php — profile setup step 1.
+ * Inserts a profiledata row, then continues to step 2.
+ */
+declare(strict_types=1);
 
-    // Prepare SQL statement to insert the record
-    $sql = "INSERT INTO ProfileData (firstname, middlename, lastname, gender, birthdate, email, contact, religion, status, emergency_person, emergency_contact) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
+require __DIR__ . '/../../connection.php';           // db(), constants
 
-    // Bind parameters
-    $stmt->bind_param("sssssssssss", $firstname, $middlename, $lastname, $gender, $birthdate, $email, $contact, $religion, $status, $emergency_person, $emergency_contact);
-
-    // Set parameters from the form data
-    $firstname = $_POST["firstname"];
-    $middlename = $_POST["middlename"];
-    $lastname = $_POST["lastname"];
-    $gender = $_POST["gender"];
-    $birthdate = $_POST["birthdate"];
-    $email = $_POST["email"];
-    $contact = $_POST["contact"];
-    $religion = $_POST["religion"];
-    $status = $_POST["status"];
-    $emergency_person = $_POST["emergency_name"]; // Corrected variable name
-    $emergency_contact = $_POST["emergency_contact"]; // Corrected variable name
-
-    // Execute the prepared statement
-    if ($stmt->execute()) {
-        echo "success"; // Optional: return success message
-    } else {
-        error_log("Error inserting record: " . $stmt->error); // Log error message
-        echo "Error inserting record"; // Return generic error message
-    }
-
-    // Close the prepared statement
-    $stmt->close();
-
-    // Close the database connection
-    $conn->close();
-} else {
-    echo "Invalid request"; // Return error message for invalid request
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . PAGES_URL . '/Personal Data.php');
+    exit;
 }
-?>
+
+$fields = [
+    'firstname'         => trim($_POST['firstname'] ?? ''),
+    'middlename'        => trim($_POST['middlename'] ?? ''),
+    'lastname'          => trim($_POST['lastname'] ?? ''),
+    'gender'            => trim($_POST['gender'] ?? ''),
+    'birthdate'         => $_POST['birthdate'] ?? null,
+    'email'             => trim($_POST['email'] ?? ''),
+    'contact'           => trim($_POST['contact'] ?? ''),
+    'religion'          => trim($_POST['religion'] ?? ''),
+    'status'            => trim($_POST['status'] ?? ''),
+    'emergency_person'  => trim($_POST['emergency_name'] ?? ''),
+    'emergency_contact' => trim($_POST['emergency_contact'] ?? ''),
+];
+
+if ($fields['firstname'] === '' || $fields['lastname'] === '' || $fields['email'] === '') {
+    exit('First name, last name and email are required.');
+}
+
+try {
+    $cols = implode(', ', array_keys($fields));
+    $ph   = implode(', ', array_fill(0, count($fields), '?'));
+    db()->prepare("INSERT INTO profiledata ($cols) VALUES ($ph)")->execute(array_values($fields));
+
+    header('Location: ' . PAGES_URL . '/Other Info.php');
+    exit;
+} catch (Throwable $e) {
+    error_log('personal_data_insert.php: ' . $e->getMessage());
+    exit('Could not save your details. Please try again.');
+}

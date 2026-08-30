@@ -42,12 +42,44 @@ upload/       (Phase 2) all uploaded files consolidated here
 `connection.php` is kept as a thin compatibility shim so every existing page
 keeps working during the migration.
 
+## Front-end
+
+The entire front-end was rebuilt (all 25 pages) on a single hand-written
+design system, `frontend/assets/css/app.css` (civic style, layered on
+Bootstrap 5.3), with shared layout partials in `frontend/partials/`:
+
+| Partial | Used by |
+|---|---|
+| `bootstrap.php` | every page — session, DB, helpers, `require_admin()` |
+| `nav.php` | the admin sidebar menu (edit the menu here) |
+| `admin_top.php` / `admin_bottom.php` | the 12 admin pages |
+| `public_top.php` / `public_bottom.php` | the 8 public-site pages |
+| `auth_top.php` / `auth_bottom.php` | Login, Forgot / Reset password |
+| `onboarding_top.php` / `onboarding_bottom.php` | the 3-step profile wizard |
+
+A page now looks like:
+
+```php
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();                       // admin pages only
+$page_title = 'Residents'; $active_nav = 'residents';
+require __DIR__ . '/../partials/admin_top.php';
+/* ...page content only... */
+require __DIR__ . '/../partials/admin_bottom.php';
+```
+
+The 29 old per-page stylesheets are archived in
+`frontend/assets/css/_unused_legacy/` (safe to delete).
+
 ## Status
 
-- **Phase 1 — DONE:** database rebuilt & seeded, single config, connection fixed,
-  authentication hardened, all pages load without fatal errors.
-- **Phase 2 — TODO:** physically move files into `frontend/` `backend/` `upload/`
-  and update includes / links.
-- **Phase 3 — TODO:** convert the remaining handlers and page queries to PDO
-  prepared statements, add CSRF tokens, escape all output, add missing
-  `require_login()` guards, de-duplicate the header/sidebar markup.
+- **Database** — rebuilt & seeded, single config, connection fixed. ✅
+- **Structure** — `frontend/` `backend/` `upload/` with shared partials. ✅
+- **Front-end** — all 25 pages rebuilt on the new design system. ✅
+- **Backend hardening (in progress):** auth, login, user CRUD, FAQ, contact,
+  information, and the profile-setup handlers now use PDO prepared statements
+  and validation. A few remaining handlers (`resident_*`, `blotter_*`,
+  `activity_*`, `barangay_official_*`, `forms_*`, `service_pdf`,
+  `services_submit`, `update_profile`, `update_basic_details`,
+  `update_other_info`, delete endpoints) still use the original mysqli code —
+  functional, but the next pass should convert them and add CSRF tokens.
