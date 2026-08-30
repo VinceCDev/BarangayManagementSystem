@@ -565,8 +565,17 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .field .toggle:hover { background: var(--surface-2); color: var(--ink); }
 
 @media (max-width: 900px) {
-    .auth { grid-template-columns: 1fr; }
+    .auth { grid-template-columns: 1fr; overflow-x: hidden; }
     .auth__aside { display: none; }
+    .auth__main { padding: 0; align-content: start; }
+    .auth__card {
+        max-width: 100%;
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 1.75rem 1.25rem 2.5rem;
+    }
     .auth__card .auth__logo { display: block; }
 }
 
