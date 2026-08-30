@@ -11,39 +11,32 @@ if ($email === '') {
     exit;
 }
 
-$page_title  = 'Reset password';
-$aside_title = 'Choose a strong password.';
-$aside_text  = 'At least 8 characters with a mix of letters, a number and a symbol.';
+$page_title = 'Reset password';
 require __DIR__ . '/../partials/auth_top.php';
 ?>
 
-<h1 class="mb-1">Create new password</h1>
-<p class="text-muted-2 mb-4">for <strong><?= e($email) ?></strong></p>
+<h1>Create new password</h1>
+<p class="sub">for <strong style="color:var(--a-text)"><?= e($email) ?></strong></p>
 
 <form method="post" action="<?= action_url('update_password.php') ?>" id="resetForm" novalidate>
     <input type="hidden" name="email" value="<?= e($email) ?>">
 
-    <label class="form-label" for="password">New password</label>
-    <div class="field mb-3">
+    <div class="field has-icon">
         <i class="bi bi-lock"></i>
         <input type="password" class="form-control" id="password" name="password"
-               placeholder="At least 8 characters" minlength="8" required>
+               placeholder="New password" minlength="8" required>
     </div>
-
-    <label class="form-label" for="confirmPassword">Confirm new password</label>
-    <div class="field mb-2">
+    <div class="field has-icon">
         <i class="bi bi-lock-fill"></i>
         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-               placeholder="Re-enter your new password" minlength="8" required>
+               placeholder="Confirm new password" minlength="8" required>
     </div>
-    <div class="form-text mb-3">Use at least 8 characters, including a letter, a number and a symbol (@ $ ! % * ? &amp;).</div>
+    <p class="sub" style="margin:-4px 0 16px">At least 8 characters with a letter, a number and a symbol (@ $ ! % * ? &amp;).</p>
 
-    <button type="submit" class="btn btn-primary w-100" style="height:46px">Reset password</button>
+    <button type="submit" class="btn-auth">Reset password</button>
 </form>
 
-<p class="text-center small text-muted-2 mt-4 mb-0">
-    <a href="<?= page_url('Login.php') ?>" class="fw-semibold"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a>
-</p>
+<p class="foot-note"><a href="<?= page_url('Login.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a></p>
 
 <?php
 $foot_extra = <<<'HTML'

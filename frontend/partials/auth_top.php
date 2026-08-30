@@ -1,14 +1,16 @@
 <?php
 /**
- * partials/auth_top.php — split-screen layout for Login / Forgot / Reset.
+ * partials/auth_top.php — dark, image-left card layout for Login / Forgot / Reset.
  *
- *   $page_title  string
- *   $aside_title string   headline on the brand panel
- *   $aside_text  string   supporting line
+ *   $page_title   string
+ *   $visual_lines string[]  rotating captions on the image (defaults provided)
  */
-$page_title  = $page_title  ?? 'Sign in';
-$aside_title = $aside_title ?? 'Your gateway to barangay services.';
-$aside_text  = $aside_text  ?? 'Manage resident records, blotter reports, certificate requests and barangay information in one place.';
+$page_title    = $page_title    ?? 'Sign in';
+$visual_lines  = $visual_lines  ?? [
+    'Serving Barangay Paule 1',
+    'One community, one portal',
+    'Records, services, and more',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,37 +26,28 @@ $aside_text  = $aside_text  ?? 'Manage resident records, blotter reports, certif
     <link href="<?= asset('css/app.css') ?>" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-<div class="auth">
-    <aside class="auth__aside">
-        <div class="brand">
-            <img src="<?= asset('images/logo1.png') ?>" alt="Barangay Paule 1 seal">
-            <span>Barangay Paule 1<small>Rizal, Laguna · Official Portal</small></span>
-        </div>
+<body class="auth-page">
+<div class="auth-shell">
 
-        <div class="d-flex flex-column gap-4">
-            <div class="auth__feature">
-                <i class="bi bi-person-vcard"></i>
-                <div><b>Resident records</b><span>Household and personal information, kept up to date.</span></div>
-            </div>
-            <div class="auth__feature">
-                <i class="bi bi-journal-text"></i>
-                <div><b>Blotter &amp; incident reports</b><span>File and track complaints from one place.</span></div>
-            </div>
-            <div class="auth__feature">
-                <i class="bi bi-award"></i>
-                <div><b>Certificate requests</b><span>Generate clearances and certificates as PDFs.</span></div>
+    <aside class="auth-visual">
+        <img class="auth-visual__img" src="<?= asset('images/cover.jpeg') ?>" alt="Barangay Paule 1">
+        <div class="auth-visual__top">
+            <span class="auth-visual__logo">
+                <img src="<?= asset('images/logo1.png') ?>" alt="">Barangay Paule 1
+            </span>
+            <a class="auth-visual__back" href="<?= page_url('index.php') ?>">
+                Back to website <i class="bi bi-arrow-up-right"></i>
+            </a>
+        </div>
+        <div class="auth-visual__caption">
+            <h3 id="authCaption"><?= e($visual_lines[0]) ?></h3>
+            <div class="auth-visual__dots" id="authDots">
+                <?php foreach ($visual_lines as $i => $_): ?>
+                    <span class="<?= $i === 0 ? 'on' : '' ?>"></span>
+                <?php endforeach; ?>
             </div>
         </div>
-
-        <div class="headline">
-            <h2><?= e($aside_title) ?></h2>
-            <p><?= e($aside_text) ?></p>
-        </div>
-
-        <p class="copyright mb-0">&copy; <?= date('Y') ?> Barangay Paule 1. All rights reserved.</p>
     </aside>
 
-    <main class="auth__main">
-        <div class="auth__card">
-            <img src="<?= asset('images/logo1.png') ?>" alt="" class="auth__logo">
+    <main class="auth-form">
+        <img src="<?= asset('images/logo1.png') ?>" alt="" class="auth-form__logo">

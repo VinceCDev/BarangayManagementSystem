@@ -1,7 +1,7 @@
 <?php
 /**
  * ForgotPassword.php — enter the account email; if it exists, continue to
- * ResetPassword.php. (No e-mail delivery is configured for this flow.)
+ * ResetPassword.php.
  */
 require __DIR__ . '/../partials/bootstrap.php';
 
@@ -21,31 +21,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title  = 'Forgot password';
-$aside_title = 'Trouble signing in?';
-$aside_text  = 'Enter the email address on your account and we will take you to the password reset step.';
+$page_title = 'Forgot password';
 require __DIR__ . '/../partials/auth_top.php';
 ?>
 
-<h1 class="mb-1">Forgot password</h1>
-<p class="text-muted-2 mb-4">We’ll help you get back into your account.</p>
+<h1>Forgot password</h1>
+<p class="sub">Enter the email on your account and we’ll take you to the reset step.
+    Remembered it? <a href="<?= page_url('Login.php') ?>">Sign in</a>.</p>
 
 <?php if ($error): ?>
-    <div class="alert alert-danger py-2"><?= e($error) ?></div>
+    <div class="mb-3 px-3 py-2 rounded" style="background:rgba(192,57,43,.15);color:#f0a9a1;border:1px solid rgba(192,57,43,.35);font-size:.85rem">
+        <?= e($error) ?>
+    </div>
 <?php endif; ?>
 
 <form method="post">
-    <label class="form-label" for="userName">Account email</label>
-    <div class="field mb-3">
+    <div class="field has-icon">
         <i class="bi bi-envelope"></i>
-        <input type="text" class="form-control" id="userName" name="userName"
-               placeholder="you@barangay.gov.ph" required autofocus>
+        <input type="text" class="form-control" name="userName" placeholder="Account email" required autofocus>
     </div>
-    <button type="submit" class="btn btn-primary w-100" style="height:46px">Continue</button>
+    <button type="submit" class="btn-auth">Continue</button>
 </form>
 
-<p class="text-center small text-muted-2 mt-4 mb-0">
-    <a href="<?= page_url('Login.php') ?>" class="fw-semibold"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a>
-</p>
+<p class="foot-note"><a href="<?= page_url('Login.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to sign in</a></p>
 
 <?php require __DIR__ . '/../partials/auth_bottom.php'; ?>
