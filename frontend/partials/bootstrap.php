@@ -28,7 +28,20 @@ require_once __DIR__ . '/../../connection.php';          // $conn, $fileManageme
 require_once __DIR__ . '/../../backend/helpers/auth.php'; // session + require_login()
 
 /** Absolute URL helpers built from BASE_URL (defined in config/database.php). */
-function asset(string $path): string { return ASSETS_URL . '/' . ltrim($path, '/'); }
+function asset(string $path): string
+{
+    $path = ltrim($path, '/');
+    $url  = ASSETS_URL . '/' . $path;
+    // Cache-bust local CSS/JS with the file's last-modified time so browsers
+    // always pick up edits instead of serving a stale copy.
+    if (preg_match('/\.(css|js)$/i', $path)) {
+        $full = ROOT_PATH . '/frontend/assets/' . $path;
+        if (is_file($full)) {
+            $url .= '?v=' . filemtime($full);
+        }
+    }
+    return $url;
+}
 function page_url(string $file): string { return PAGES_URL . '/' . ltrim($file, '/'); }
 function action_url(string $file): string { return ACTIONS_URL . '/' . ltrim($file, '/'); }
 function upload_url(string $path): string { return UPLOAD_URL . '/' . ltrim($path, '/'); }
