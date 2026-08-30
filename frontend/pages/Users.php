@@ -74,6 +74,11 @@ require __DIR__ . '/../partials/admin_top.php';
                         </span>
                     </td>
                     <td class="col-actions">
+                        <?= view_button([
+                            'Full name' => $r['fullName'],
+                            'Username'  => $r['userName'],
+                            'Role'      => $types[$roleKey] ?? ucfirst($roleKey ?: 'Staff'),
+                        ], 'Account details') ?>
                         <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editUser(this)"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
                                 onclick="deleteUser(<?= (int) $r['id'] ?>, '<?= e($r['fullName']) ?>')"><i class="bi bi-trash"></i></button>

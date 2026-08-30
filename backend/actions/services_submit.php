@@ -1,5 +1,7 @@
 <?php
 require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../../backend/helpers/auth.php';
+require_login('/BarangayManagementSystem-main/frontend/pages/Login.php');
 
 // Use statement must be at the top
 require(__DIR__ . '/../lib/fpdf186/fpdf.php');
@@ -7,18 +9,24 @@ require(__DIR__ . '/../lib/fpdi2/src/autoload.php');
 
 use setasign\Fpdi\Fpdi;
 
+// Where to send the resident afterwards (whitelisted).
+$returnPage = in_array($_POST['_return'] ?? '', ['MyRequests.php', 'Certificate.php'], true)
+    ? $_POST['_return'] : 'MyRequests.php';
+$returnUrl = '/BarangayManagementSystem-main/frontend/pages/' . $returnPage;
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $certificate_id = $_POST["certificate_id"];
-    $fullName = $_POST["fullName"];
-    $age = $_POST["age"];
-    $purpose = $_POST["purpose"];
-    $address = $_POST["address"];
-    $dob = $_POST["dob"];
-    $civilStatus = $_POST["civilStatus"];
-    $placeOfBirth = $_POST["placeOfBirth"];
-    $sex = $_POST["sex"];
-    $email = $_POST["email"];
-    $business = $_POST["business"];
+    $certificate_id = (int) ($_POST["certificate_id"] ?? 0);
+    $fullName = trim($_POST["fullName"] ?? '');
+    $age = $_POST["age"] ?? null;
+    $purpose = trim($_POST["purpose"] ?? '');
+    $address = trim($_POST["address"] ?? '');
+    $dob = $_POST["dob"] ?? null;
+    $civilStatus = $_POST["civilStatus"] ?? '';
+    $placeOfBirth = $_POST["placeOfBirth"] ?? '';
+    $sex = $_POST["sex"] ?? '';
+    // Always tie the request to the signed-in account, not a typed-in address.
+    $email = current_username();
+    $business = $_POST["business"] ?? '';
 
     // Insert the new document request
     $sql = "INSERT INTO document_requests (certificate_id, fullName, age, purpose, address, dob, civilStatus, placeOfBirth, sex, email, business) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -126,7 +134,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $insertStmt->close();
 
             // Redirect after saving the PDF
-            header("Location: /BarangayManagementSystem-main/frontend/pages/Certificate.php");
+            header("Location: " . $returnUrl . "?sent=ok");
             exit();
         } else {
             echo "No certificate template found";

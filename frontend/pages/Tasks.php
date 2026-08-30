@@ -128,8 +128,9 @@ require __DIR__ . '/../partials/admin_top.php';
                 $view = ['Title' => $t['title'], 'Description' => $t['description'],
                          'Assigned to' => $t['assignee_name'] . ' (' . role_label($t['assignee_role']) . ')',
                          'Priority' => $t['priority'], 'Due date' => $t['due_date'] ?: '—',
-                         'Status' => $t['status'], 'Created by' => $t['created_by'],
-                         'Created' => $t['created_at']]; ?>
+                         'Status' => $t['status'], 'Progress note' => $t['note'] ?: '—',
+                         'Attachment' => $t['attachment'] ? $t['attachment'] : 'None',
+                         'Created by' => $t['created_by'], 'Created' => $t['created_at']]; ?>
                 <tr data-row='<?= e(json_encode($t, JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
                     <td>
                         <div class="fw-semibold"><?= e($t['title']) ?></div>
@@ -144,12 +145,14 @@ require __DIR__ . '/../partials/admin_top.php';
                     <td><?= task_pill((string) $t['status']) ?></td>
                     <td class="col-actions">
                         <?= view_button($view, 'Task details') ?>
-                        <?php if (!$admin && $t['status'] !== 'Done'): ?>
-                            <button class="btn btn-sm btn-light btn-icon text-success" title="Advance status"
-                                    onclick="advance(<?= (int) $t['id'] ?>, '<?= $t['status'] === 'Pending' ? 'In Progress' : 'Done' ?>')">
-                                <i class="bi bi-arrow-right-circle"></i></button>
+                        <?php if ($t['attachment']): ?>
+                            <a class="btn btn-sm btn-light btn-icon" title="Download attachment" target="_blank"
+                               href="<?= upload_url('task_files/' . $t['attachment']) ?>"><i class="bi bi-paperclip"></i></a>
                         <?php endif; ?>
-                        <?php if ($admin): ?>
+                        <?php if (!$admin): ?>
+                            <button class="btn btn-sm btn-light btn-icon text-primary" title="Update task"
+                                    onclick="openUpdate(this)"><i class="bi bi-pencil-square"></i></button>
+                        <?php else: ?>
                             <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editTask(this)"><i class="bi bi-pencil"></i></button>
                             <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
                                     onclick="delTask(<?= (int) $t['id'] ?>, '<?= e($t['title']) ?>')"><i class="bi bi-trash"></i></button>
@@ -165,9 +168,9 @@ require __DIR__ . '/../partials/admin_top.php';
 
 <?php if ($admin): ?>
 <div class="modal fade" id="taskModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
-      <form id="taskForm" method="POST" action="<?= $saveUrl ?>">
+      <form id="taskForm" method="POST" enctype="multipart/form-data" action="<?= $saveUrl ?>">
         <div class="modal-header">
           <h5 class="modal-title" id="taskModalTitle">New Task</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -182,7 +185,7 @@ require __DIR__ . '/../partials/admin_top.php';
             <select class="form-select" name="assignee_email" id="tf_assignee" required>
               <option value="">Select…</option>
               <?php foreach ($assignees as $a): ?>
-                <option value="<?= e($a['userName']) ?>" data-name="<?= e($a['fullName']) ?>" data-role="<?= e($a['userType']) ?>">
+                <option value="<?= e($a['userName']) ?>">
                   <?= e($a['fullName']) ?> — <?= e(role_label(strtolower((string) $a['userType']))) ?>
                 </option>
               <?php endforeach; ?>
@@ -198,6 +201,11 @@ require __DIR__ . '/../partials/admin_top.php';
             </select></div>
           <div class="col-md-4"><label class="form-label">Due date</label>
             <input type="date" class="form-control" name="due_date" id="tf_due"></div>
+          <div class="col-12"><label class="form-label">Progress / completion note</label>
+            <textarea class="form-control" rows="2" name="note" id="tf_note"></textarea></div>
+          <div class="col-12"><label class="form-label">Attachment <span class="text-caption">(PDF, image, Word, Excel — max 10 MB)</span></label>
+            <input type="file" class="form-control" name="attachment">
+            <div class="form-text" id="tf_fileNote"></div></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -207,27 +215,42 @@ require __DIR__ . '/../partials/admin_top.php';
     </div>
   </div>
 </div>
+<?php else: ?>
+<!-- Assignee "update my task" modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" enctype="multipart/form-data" action="<?= $saveUrl ?>">
+        <input type="hidden" name="status_only" value="1">
+        <input type="hidden" name="id" id="uf_id">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uf_title">Update task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Status</label>
+            <select class="form-select" name="status" id="uf_status">
+              <?php foreach ($statuses as $s): ?><option><?= $s ?></option><?php endforeach; ?>
+            </select></div>
+          <div class="mb-3"><label class="form-label">Progress / completion note</label>
+            <textarea class="form-control" rows="3" name="note" id="uf_note"
+                      placeholder="What did you do? Anything the admin should know?"></textarea></div>
+          <div class="mb-2"><label class="form-label">Upload a document <span class="text-caption">(PDF, image, Word, Excel — max 10 MB)</span></label>
+            <input type="file" class="form-control" name="attachment">
+            <div class="form-text" id="uf_fileNote"></div></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
-<form id="statusForm" method="POST" action="<?= $saveUrl ?>" class="d-none">
-    <input type="hidden" name="id" id="sf_id">
-    <input type="hidden" name="status" id="sf_status">
-    <input type="hidden" name="status_only" value="1">
-</form>
-
 <?php
-$foot_extra = <<<HTML
-<script>
-function advance(id, next) {
-    Swal.fire({ icon:'question', title:'Update status?', text:'Mark this task as "' + next + '"?',
-        showCancelButton:true, confirmButtonText:'Update', reverseButtons:true })
-      .then(r => { if (r.isConfirmed) {
-          document.getElementById('sf_id').value = id;
-          document.getElementById('sf_status').value = next;
-          document.getElementById('statusForm').submit();
-      }});
-}
-HTML;
+$foot_extra = "<script>\n";
 
 if ($admin) {
     $foot_extra .= <<<HTML
@@ -235,6 +258,7 @@ const taskModal = new bootstrap.Modal('#taskModal');
 const tForm = document.getElementById('taskForm');
 function openTask() {
     tForm.reset(); document.getElementById('tf_id').value = '';
+    document.getElementById('tf_fileNote').textContent = '';
     document.getElementById('taskModalTitle').textContent = 'New Task';
     document.getElementById('taskSubmit').textContent = 'Save task';
     taskModal.show();
@@ -249,6 +273,8 @@ function editTask(btn) {
     document.getElementById('tf_priority').value = d.priority || 'Normal';
     document.getElementById('tf_status').value = d.status || 'Pending';
     document.getElementById('tf_due').value = d.due_date || '';
+    document.getElementById('tf_note').value = d.note || '';
+    document.getElementById('tf_fileNote').textContent = d.attachment ? ('Current file: ' + d.attachment + ' (upload to replace)') : '';
     document.getElementById('taskModalTitle').textContent = 'Edit Task';
     document.getElementById('taskSubmit').textContent = 'Update task';
     taskModal.show();
@@ -257,6 +283,19 @@ function delTask(id, title) {
     Swal.fire({ icon:'warning', title:'Delete task?', html:'Remove <b>' + title + '</b>?',
         showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#c0392b', reverseButtons:true })
       .then(r => { if (r.isConfirmed) location.href = '{$deleteUrl}?id=' + id; });
+}
+HTML;
+} else {
+    $foot_extra .= <<<HTML
+const updateModal = new bootstrap.Modal('#updateModal');
+function openUpdate(btn) {
+    const d = JSON.parse(btn.closest('tr').dataset.row);
+    document.getElementById('uf_id').value = d.id;
+    document.getElementById('uf_status').value = d.status || 'Pending';
+    document.getElementById('uf_note').value = d.note || '';
+    document.getElementById('uf_fileNote').textContent = d.attachment ? ('You already uploaded: ' + d.attachment) : '';
+    document.getElementById('uf_title').textContent = 'Update: ' + (d.title || 'task');
+    updateModal.show();
 }
 HTML;
 }

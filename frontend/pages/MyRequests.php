@@ -33,10 +33,16 @@ $page_title   = 'My Document Requests';
 $page_heading = 'My Document Requests';
 $page_subtitle = $total . ' request' . ($total === 1 ? '' : 's');
 $active_nav   = 'myrequests';
-$page_actions = '<a class="btn btn-primary" href="' . page_url('Certificate.php') . '"><i class="bi bi-plus-lg me-1"></i>Request a Document</a>';
+$page_actions = '<a class="btn btn-primary" href="' . page_url('RequestDocument.php') . '"><i class="bi bi-plus-lg me-1"></i>Request a Document</a>';
 
 require __DIR__ . '/../partials/admin_top.php';
 ?>
+
+<?php if (($_GET['sent'] ?? '') === 'ok'): ?>
+<div class="alert alert-success d-flex align-items-center gap-2">
+    <i class="bi bi-check-circle-fill"></i> Your request has been submitted. The certificate PDF is ready below.
+</div>
+<?php endif; ?>
 
 <div class="card">
     <div class="table-wrap">

@@ -273,6 +273,8 @@ CREATE TABLE IF NOT EXISTS `tasks` (
     `status`         VARCHAR(20)  NOT NULL DEFAULT 'Pending' COMMENT 'Pending / In Progress / Done',
     `priority`       VARCHAR(20)  NOT NULL DEFAULT 'Normal'  COMMENT 'Low / Normal / High',
     `due_date`       DATE         DEFAULT NULL,
+    `attachment`     VARCHAR(255) DEFAULT NULL COMMENT 'File uploaded by the assignee (in /upload/task_files)',
+    `note`           TEXT         DEFAULT NULL COMMENT 'Progress / completion note from the assignee',
     `created_by`     VARCHAR(190) DEFAULT NULL,
     `created_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

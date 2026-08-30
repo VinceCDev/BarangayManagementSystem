@@ -51,7 +51,7 @@ require __DIR__ . '/../partials/admin_top.php';
         <span><span class="stat__value"><?= count($myMsgs) ?>+</span>
         <span class="stat__label">My messages</span></span>
     </a>
-    <a class="stat stat--teal text-decoration-none" href="<?= page_url('Certificate.php') ?>">
+    <a class="stat stat--teal text-decoration-none" href="<?= page_url('RequestDocument.php') ?>">
         <span class="stat__icon"><i class="bi bi-plus-square"></i></span>
         <span><span class="stat__value">New</span>
         <span class="stat__label">Request a document</span></span>
@@ -72,7 +72,7 @@ require __DIR__ . '/../partials/admin_top.php';
                     <tbody>
                     <?php if (!$myRequests): ?>
                         <tr><td colspan="3"><div class="empty py-4"><i class="bi bi-inbox"></i>No requests yet.
-                            <div class="mt-2"><a class="btn btn-sm btn-primary" href="<?= page_url('Certificate.php') ?>">Request a document</a></div></div></td></tr>
+                            <div class="mt-2"><a class="btn btn-sm btn-primary" href="<?= page_url('RequestDocument.php') ?>">Request a document</a></div></div></td></tr>
                     <?php else: foreach ($myRequests as $r): ?>
                         <tr>
                             <td class="fw-semibold"><?= e($r['certificate_name'] ?? '—') ?></td>

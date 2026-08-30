@@ -30,7 +30,7 @@ if (!function_exists('nav_all')) {
             // ---- Resident-only portal --------------------------------------
             'My Portal' => [
                 ['key' => 'myrequests',  'label' => 'My Document Requests', 'icon' => 'bi-file-earmark-text', 'file' => 'MyRequests.php',  'roles' => ['resident']],
-                ['key' => 'request_new', 'label' => 'Request a Document',   'icon' => 'bi-plus-square',       'file' => 'Certificate.php', 'roles' => ['resident']],
+                ['key' => 'request_new', 'label' => 'Request a Document',   'icon' => 'bi-plus-square',       'file' => 'RequestDocument.php', 'roles' => ['resident']],
                 ['key' => 'mymessages',  'label' => 'My Messages',          'icon' => 'bi-chat-left-dots',    'file' => 'MyMessages.php',  'roles' => ['resident']],
             ],
 
