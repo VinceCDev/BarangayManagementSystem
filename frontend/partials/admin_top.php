@@ -83,7 +83,7 @@ $user          = current_user_card();
             <li><a class="dropdown-item" href="<?= page_url('UserProfile.php') ?>"><i class="bi bi-person me-2"></i>My Profile</a></li>
             <li><a class="dropdown-item" href="<?= page_url('ForgotPassword.php') ?>"><i class="bi bi-key me-2"></i>Reset Password</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
+            <li><a class="dropdown-item text-danger" href="?logout=1" onclick="return confirmLogout(event)"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
         </ul>
     </div>
 </header>

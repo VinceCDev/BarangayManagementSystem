@@ -20,7 +20,6 @@ $stats = [
     ['label' => 'Residents',          'value' => $countOf('residents'),          'icon' => 'bi-person-vcard',      'href' => 'Resident.php',                'mod' => 'stat--green'],
     ['label' => 'Blotter Records',    'value' => $countOf('blotterrecords'),     'icon' => 'bi-journal-text',      'href' => 'Blotter.php',                 'mod' => 'stat--red'],
     ['label' => 'Document Requests',  'value' => $countOf('document_requests'),  'icon' => 'bi-file-earmark-text', 'href' => 'DocumentRequest.php',         'mod' => 'stat--gold'],
-    ['label' => 'Messages',           'value' => $countOf('receivemessages'),    'icon' => 'bi-chat-left-dots',    'href' => 'BarangayContact&Message.php', 'mod' => 'stat--violet'],
     ['label' => 'Activities',         'value' => $countOf('activity'),           'icon' => 'bi-calendar-event',    'href' => 'Activity.php',                'mod' => 'stat--teal'],
 ];
 

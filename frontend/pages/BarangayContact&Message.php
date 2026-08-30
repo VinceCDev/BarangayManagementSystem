@@ -46,7 +46,6 @@ require __DIR__ . '/../partials/admin_top.php';
   <div class="col-12">
     <div class="card">
         <form class="table-toolbar" method="get">
-            <span class="card-hd__title me-2"><i class="bi bi-inbox"></i> Inbox</span>
             <div class="field-search">
                 <i class="bi bi-search"></i>
                 <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search sender or email…">

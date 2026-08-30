@@ -20,6 +20,22 @@ $foot_extra = $foot_extra ?? '';
             }
         });
     })();
+
+    // Confirm before signing out.
+    function confirmLogout(e) {
+        if (e) e.preventDefault();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sign out?',
+            text: 'You will be returned to the login screen.',
+            showCancelButton: true,
+            confirmButtonText: 'Sign out',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#c0392b',
+            reverseButtons: true
+        }).then(function (r) { if (r.isConfirmed) location.href = '?logout=1'; });
+        return false;
+    }
 </script>
 <?= $foot_extra ?>
 </body>
