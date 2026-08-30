@@ -63,11 +63,8 @@ $is = fn(string $k) => $active === $k ? 'active' : '';
                 <li class="nav-item"><a class="nav-link <?= $is('faq') ?>" href="<?= page_url('FAQ.php') ?>">FAQ</a></li>
                 <li class="nav-item"><a class="nav-link <?= $is('contact') ?>" href="<?= page_url('Contact.php') ?>">Contact</a></li>
                 <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
-                    <a class="nav-link fw-semibold" href="<?= page_url('Login.php') ?>">Sign in</a>
-                </li>
-                <li class="nav-item mt-1 mt-lg-0">
-                    <a class="btn btn-primary px-3" href="<?= page_url('Register.php') ?>">
-                        <i class="bi bi-person-plus me-1"></i>Sign up
+                    <a class="btn btn-primary px-3" href="<?= page_url('Login.php') ?>">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign in
                     </a>
                 </li>
             </ul>
