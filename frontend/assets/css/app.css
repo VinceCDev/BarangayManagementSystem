@@ -443,6 +443,19 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .modal-body   { padding: var(--sp-5); }
 .modal-footer { border-top: 1px solid var(--line); padding: var(--sp-4) var(--sp-5); }
 
+/* When a scrollable modal wraps its header/body/footer in a <form>, that form
+   must itself be the flex column so the body can scroll (otherwise the top of a
+   tall form is clipped and unreachable). */
+.modal-dialog-scrollable .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    overflow: hidden;
+}
+.modal-dialog-scrollable .modal-content > form > .modal-header,
+.modal-dialog-scrollable .modal-content > form > .modal-footer { flex-shrink: 0; }
+.modal-dialog-scrollable .modal-content > form > .modal-body { overflow-y: auto; }
+
 /* 6. ───────────────────────────────────────────────  PUBLIC SITE  ─────── */
 
 /* Thin "official portal" utility strip above the nav */

@@ -117,13 +117,16 @@ if (!function_exists('e')) {
  */
 function render_pager(int $page, int $pages, int $total, array $query = [], int $perPage = 0): string
 {
+    // Nothing to page through -> no footer at all (the empty-state row covers it).
+    if ($total === 0) {
+        return '';
+    }
+
     $pages = max(1, $pages);
     $page  = min(max(1, $page), $pages);
 
     // "Showing 1–8 of 42 results"
-    if ($total === 0) {
-        $summary = '<strong>0</strong> results';
-    } elseif ($perPage > 0) {
+    if ($perPage > 0) {
         $from = ($page - 1) * $perPage + 1;
         $to   = min($total, $page * $perPage);
         $summary = 'Showing <strong>' . number_format($from) . '–' . number_format($to)
