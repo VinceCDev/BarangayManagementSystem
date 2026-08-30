@@ -29,6 +29,7 @@ unset($_SESSION['reg_old']);
 $v = fn(string $k) => e($old[$k] ?? '');
 
 $page_title  = 'Create an account';
+$shell_class = 'auth-shell--wide';
 $aside_title = 'Join the barangay portal.';
 $aside_text  = 'Create a resident account to request documents, message the barangay and track everything in one place.';
 require __DIR__ . '/../partials/auth_top.php';
@@ -43,52 +44,62 @@ require __DIR__ . '/../partials/auth_top.php';
     </div>
 <?php endif; ?>
 
-<form method="post" action="<?= action_url('register_resident.php') ?>" id="regForm" novalidate>
-    <div class="row g-2">
-        <div class="col-6">
-            <label class="form-label">First name</label>
-            <input class="form-control" name="firstname" value="<?= $v('firstname') ?>" required>
+<form method="post" action="<?= action_url('register_resident.php') ?>" id="regForm" novalidate class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">First name</label>
+        <div class="field"><input class="form-control" name="firstname" value="<?= $v('firstname') ?>" required></div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Last name</label>
+        <div class="field"><input class="form-control" name="lastname" value="<?= $v('lastname') ?>" required></div>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Middle name <span class="text-caption">(optional)</span></label>
+        <div class="field"><input class="form-control" name="middlename" value="<?= $v('middlename') ?>"></div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Contact number</label>
+        <div class="field has-icon">
+            <i class="bi bi-telephone"></i>
+            <input type="tel" class="form-control" name="contact" value="<?= $v('contact') ?>" placeholder="09xx xxx xxxx">
         </div>
-        <div class="col-6">
-            <label class="form-label">Last name</label>
-            <input class="form-control" name="lastname" value="<?= $v('lastname') ?>" required>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Email</label>
+        <div class="field has-icon">
+            <i class="bi bi-envelope"></i>
+            <input type="email" class="form-control" name="email" value="<?= $v('email') ?>" placeholder="you@example.com" required>
         </div>
     </div>
 
-    <label class="form-label">Middle name <span class="text-caption">(optional)</span></label>
-    <div class="field mb-0"><input class="form-control" name="middlename" value="<?= $v('middlename') ?>"></div>
-
-    <label class="form-label">Email</label>
-    <div class="field has-icon">
-        <i class="bi bi-envelope"></i>
-        <input type="email" class="form-control" name="email" value="<?= $v('email') ?>" placeholder="you@example.com" required>
+    <div class="col-md-6">
+        <label class="form-label">Password</label>
+        <div class="field has-icon">
+            <i class="bi bi-lock"></i>
+            <input type="password" class="form-control" id="pw" name="password" minlength="8" placeholder="At least 8 characters" required>
+            <button class="toggle" type="button" tabindex="-1" onclick="const p=document.getElementById('pw');p.type=p.type==='password'?'text':'password';this.querySelector('i').className=p.type==='password'?'bi bi-eye':'bi bi-eye-slash'"><i class="bi bi-eye"></i></button>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Confirm password</label>
+        <div class="field has-icon">
+            <i class="bi bi-lock-fill"></i>
+            <input type="password" class="form-control" id="pw2" name="confirmPassword" minlength="8" placeholder="Re-enter your password" required>
+        </div>
     </div>
 
-    <label class="form-label">Contact number</label>
-    <div class="field has-icon">
-        <i class="bi bi-telephone"></i>
-        <input type="tel" class="form-control" name="contact" value="<?= $v('contact') ?>" placeholder="09xx xxx xxxx">
+    <div class="col-12">
+        <label class="form-check mb-0">
+            <input class="form-check-input" type="checkbox" name="terms" value="1" required>
+            <span class="form-check-label">I agree to the barangay's terms and data-privacy notice.</span>
+        </label>
     </div>
 
-    <label class="form-label">Password</label>
-    <div class="field has-icon">
-        <i class="bi bi-lock"></i>
-        <input type="password" class="form-control" id="pw" name="password" minlength="8" placeholder="At least 8 characters" required>
-        <button class="toggle" type="button" tabindex="-1" onclick="const p=document.getElementById('pw');p.type=p.type==='password'?'text':'password';this.querySelector('i').className=p.type==='password'?'bi bi-eye':'bi bi-eye-slash'"><i class="bi bi-eye"></i></button>
+    <div class="col-12">
+        <button type="submit" class="btn-auth" style="height:46px"><i class="bi bi-person-plus me-1"></i>Create account</button>
     </div>
-
-    <label class="form-label">Confirm password</label>
-    <div class="field has-icon">
-        <i class="bi bi-lock-fill"></i>
-        <input type="password" class="form-control" id="pw2" name="confirmPassword" minlength="8" placeholder="Re-enter your password" required>
-    </div>
-
-    <label class="form-check mt-2">
-        <input class="form-check-input" type="checkbox" name="terms" value="1" required>
-        <span class="form-check-label">I agree to the barangay's terms and data-privacy notice.</span>
-    </label>
-
-    <button type="submit" class="btn-auth mt-3" style="height:46px"><i class="bi bi-person-plus me-1"></i>Create account</button>
 </form>
 
 <p class="foot-note"><a href="<?= home_url() ?>"><i class="bi bi-arrow-left me-1"></i>Back to public site</a></p>

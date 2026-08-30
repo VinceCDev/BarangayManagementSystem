@@ -6,6 +6,7 @@
  *   $visual_lines string[]  rotating captions on the image (defaults provided)
  */
 $page_title    = $page_title    ?? 'Sign in';
+$shell_class   = $shell_class   ?? '';   // e.g. 'auth-shell--wide' for longer forms
 $visual_lines  = $visual_lines  ?? [
     'Serving Barangay Paule 1',
     'One community, one portal',
@@ -27,7 +28,7 @@ $visual_lines  = $visual_lines  ?? [
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="auth-page">
-<div class="auth-shell">
+<div class="auth-shell <?= e($shell_class) ?>">
 
     <aside class="auth-visual">
         <img class="auth-visual__img" src="<?= asset('images/cover.jpeg') ?>" alt="Barangay Paule 1">

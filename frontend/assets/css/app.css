@@ -595,6 +595,14 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
     box-shadow: 0 30px 70px rgba(16, 32, 44, .14);
 }
 
+/* Wider shell for longer forms (sign-up) — the visual panel keeps its size,
+   the form side gets the extra width so fields fit two-per-row and the card
+   stays short enough to avoid scrolling. */
+.auth-shell--wide { width: min(1080px, 100%); grid-template-columns: 0.82fr 1.18fr; }
+.auth-shell--wide .auth-form { justify-content: flex-start; }
+.auth-form .row .field { margin-bottom: 0; }        /* grid gap handles spacing */
+.auth-form .row .form-label { margin-top: 0; }
+
 /* --- Left visual card (photo keeps its own dark overlay for white text) --- */
 .auth-visual {
     position: relative;
