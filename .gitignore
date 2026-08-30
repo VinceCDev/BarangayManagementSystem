@@ -1,0 +1,15 @@
+# --- Local configuration (contains DB + SMTP credentials) ---
+backend/config/config.php
+
+# --- User-uploaded content ---
+upload/*/
+!upload/.gitkeep
+
+# --- Backups / editor / OS noise ---
+_legacy_backup/
+*.tmp
+*.log
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/

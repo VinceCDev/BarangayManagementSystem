@@ -1,0 +1,500 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    color: #ededed;
+    background-size: cover;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    display: flex;
+    background: rgba(255, 255, 255, 0.9); 
+    align-items: center;
+    padding: 20px;
+    justify-content: space-between;
+    transition: backdrop-filter 0.3s ease; 
+    backdrop-filter: blur(0px); 
+}
+
+.logo {
+    display: flex; 
+    align-items: center;
+    text-decoration: none; 
+    color: black; 
+    font-weight: 600; 
+    font-size: 25px; 
+    cursor: default;
+    opacity: 0;
+    animation: slideRight 1s ease forwards;
+}
+
+.logo img {
+    margin-left: 30px; 
+}
+
+.logo h2{
+    margin-left: 30px;
+}
+
+.hamburger {
+    display: none;
+}
+
+.navigation {
+    margin-right: 25px; 
+}
+
+.navigation a {
+    display: inline-block;
+    color: #000;
+    font-size: 25px;
+    margin-left: 35px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: 0.5s;
+    opacity: 0; 
+    margin-right: 15px;
+    animation: slideTop .5s ease forwards;
+    animation-delay: calc(.2s * var(--i));
+}
+
+.navigation a:hover {
+    color: white;
+    background-color: #00aaff;
+    padding: 12px;
+    border-radius: 30px;
+}
+
+.before-line {
+    position: relative;
+    padding-left: 90px;
+    font-size: 20px;
+}
+
+.before-line:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 10%;
+    height: 3px;
+    background-color: #00aaff; 
+    z-index: -1;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown button {
+    display: inline-block;
+    color: #000;
+    font-size: 25px;
+    margin-left: 35px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: 0.5s;
+    opacity: 1;
+    margin-right: 15px;
+    animation: slideTop .5s ease forwards;
+    animation-delay: calc(.2s * var(--i));
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+  .dropdown button i{
+    color: #000;
+    font-size: 15px;
+  }
+
+.dropdown button:hover{
+    color: white;
+    background-color: #00aaff;
+    padding: 12px;
+    border-radius: 30px;
+  }
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    top: 100%; 
+    left: 0;
+    color: #fff;
+    margin-left: 30px;
+    text-align: center;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 8px;
+    border-top: 4px solid #00aaff;
+}
+  .dropdown-content a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    font-size: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 20px;
+  }
+
+  .dropdown-content a:hover {
+    background-color: #F4B400;
+    color: #000;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+  .FAQ {
+    width: 95%;
+    height: 60vh;
+    position: relative;
+    justify-content: center; 
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    padding: 70px 10% 0px;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 20px; 
+    margin: 0 auto;
+    text-align: center;
+    flex-direction: column;
+    margin-top: 100px;
+}
+
+.h31 {
+    font-size: 40px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 50px; 
+    transform: translateX(-50%); 
+    text-align: center;
+    justify-content: center;
+}
+
+.FAQ p {
+    width: 500px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute;
+    top: 110px; 
+    transform: translateX(-50%); 
+    text-align: center;
+    font-size: 18px;
+}
+
+.FAQ hr {
+    width: 1000px;
+    margin: 0 auto;
+    margin-bottom: 20px; 
+    opacity: 0;
+    animation: slideRight 1s ease forwards; 
+    position: absolute; 
+    top: 150px; 
+    transform: translateX(-50%); 
+    text-align: center;
+    font-weight: bold;
+}
+
+.container{
+    width: 95%;
+    height: 40vh;
+    position: relative;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    padding: 70px 10% 0px;
+    align-items: center;
+    border-radius: 20px; 
+    margin: 0 auto;
+    text-align: center;
+    flex-direction: column;
+    margin-top: 550px;
+}
+
+input {
+    position: relative;
+    align-items: start;
+    width: 77.5%;
+    height: 80px !important;
+    border-radius: 5px;
+    padding-left: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border: 1px solid #ced4da;
+    transition: border-bottom 0.3s ease, background-color 0.3s ease; 
+}
+
+input:hover::after,
+input:focus::after,
+input:active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #00aaff;
+    transition: width 0.3s ease, left 0.3s ease; 
+    transform: translateX(-50%);
+}
+
+input:hover,
+input:focus,
+input:active {
+    background-color: #ededed;
+    outline: none;
+}
+
+.faq-item {
+    width: 100%;
+    text-align: left;
+    border-bottom: 1px solid #607d8b;
+    display: block; 
+    clear: both; 
+    margin-top: 30px;
+}
+
+.question {
+    font-weight: bold;
+    width: 100%;
+    text-align: justify;
+    height: 40px;
+    font-size: 20px;
+}
+
+.answer {
+    width: 100%;
+    font-size: 20px;
+    text-align: justify;
+    margin-top: 10px;
+    line-height: 30px;
+    margin-bottom: 20px;
+}
+
+  .question.active {
+    margin-bottom: 60px; 
+}
+
+.container.active {
+    margin-top: 150px; 
+}
+
+footer {
+    background-color: black;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    font-size: 24px;
+    opacity: 0;
+    animation: slideTop .5s ease forwards;
+    height: 70px;
+    margin-top: 600px;
+}
+
+@keyframes slideRight {
+    0% {
+        transform: translateX(-100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateX(0px);
+        opacity: 1;
+    }
+}
+
+@keyframes slideLeft {
+    0% {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateX(0px);
+        opacity: 1;
+    }
+}
+
+@keyframes slideTop {
+    0% {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateY(0px);
+        opacity: 1;
+    }
+}
+
+@keyframes slideBottom {
+    0% {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    100%{
+        transform: translateY(0px);
+        opacity: 1;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+            .header {
+              padding: 20px 30px;
+          }
+
+          .header .logo{
+              margin-left: -45px;
+              color: #000;
+              width: 160%;
+          }
+
+          .header .logo h2{
+              margin-left: 10px;
+              margin-top: 5px;
+              font-size: 23px;
+          }
+
+          .navigation {
+              background-color: white;
+              top: 0;
+              display: block;
+              justify-content: center;
+              align-items: center;
+              flex-direction: column;
+              transition: left 0.5s ease, opacity 0.5s ease; 
+              backdrop-filter: blur(5px);
+              color: black;
+              opacity: 0; 
+              position: absolute; 
+              width: 60%; 
+              text-align: center;
+              left: 0;
+              height: 1100px;
+              padding-top: 110px;
+          }
+
+          .navigation.active {
+              opacity: 1; 
+              z-index: 1; 
+          }
+
+          .navigation a {
+              margin: 10px 0;
+              display: block;
+              margin: 0 auto;
+              color: black;
+              font-size: 28px;
+              margin-bottom: 25px;
+              transition: width 0.5s ease; 
+          }
+
+          .navigation a:hover {
+              width: 50%;
+          }
+
+          .navigation button {
+              margin: 10px 0;
+              margin: 0 auto;
+              font-size: 28px;
+              margin-bottom: 20px;
+          }
+
+          .hamburger {
+              margin-left: 320px;
+              top: 45px;
+              left: -10px;
+              z-index: 101;
+              cursor: pointer;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              width: 30px;
+              height: 20px;
+              background-color: transparent;
+              border: none;
+              position: fixed;
+          }
+
+          .hamburger .bar {
+              width: 100%;
+              height: 3px;
+              background-color: #00aaff;
+              transition: all 0.3s ease;
+          }
+
+          .hamburger.active .bar:nth-child(2) {
+              opacity: 0; 
+          }
+
+          .hamburger.active .bar:first-child {
+              transform: translateY(8px) rotate(45deg);
+          }
+
+          .hamburger.active .bar:last-child {
+              transform: translateY(-8px) rotate(-45deg); 
+          }
+
+          .dropdown-content {
+              margin: 0 auto;
+              width: 100%;
+              height: 270px;
+              padding-top: 20px;
+          }
+
+          .dropdown-content a {
+              color: white;
+              font-size: 19px;
+          }
+
+            #faq1{
+                width: 50%;
+            }
+
+            .FAQ p{
+                margin: 0 auto;
+                margin-top: 50px;
+            }
+
+            .FAQ hr{
+            width: 80%;
+            margin: 0 auto;
+            left: 0;
+            right: 0;
+            margin-top: 50px;
+            }
+            .FAQ .container{
+                margin-top: 2300px;
+            }
+            
+            .question{
+                margin-bottom: 140px;
+            }
+
+            footer{
+                margin-top: 2400px;
+                font-size: 18px;
+            }
+        }

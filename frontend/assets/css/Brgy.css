@@ -1,0 +1,574 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif sans-serif;
+  background-color: #f0f0f0;
+}
+.header {
+  background-color: #0078d4;
+  color: #fff;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  height:85px;
+  top: 0;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hamburger,
+.zoom {
+  font-size: 27px;
+  height: 40px;
+  width: 40px;
+  margin-top: 12px;
+}
+
+.logo h3{
+margin-top: 9px;
+}
+
+.logo{
+display: flex;
+margin-right: 1250px;
+}
+
+.logo img{
+margin-right: 10px;
+}
+
+.profile-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #ccc;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin-right: 10px;
+  border: 1px none #000;
+  color: #000;
+}
+
+.profile-icon i {
+  color: black;
+  font-size: 20px;
+}
+
+.profile-details-container {
+  display: none;
+  position: absolute;
+  top: 85px;
+  margin-right: 210px;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  width: 15%;
+}
+
+.profile-details-container button{
+background-color: red;
+color: #fff;
+margin-left: 130px;
+height: 40px;
+width: 37%;
+border-radius: 8px;
+font-size: 12px;
+}
+
+.profile-details-container a{
+display: block;
+color: #000;
+text-decoration: none;
+}
+
+.profile-details-container a i{
+margin-right: 5px;
+}
+
+.profile-icon:hover .profile-details-container {
+  display: block;
+}
+
+
+.hamburger {
+  font-size: 24px;
+  margin-left: 15px;
+}
+
+.zoom{
+margin-left: -560px;
+}
+/* CSS to hide profile details container */
+.profile-details-container {
+display: none;
+/* Add additional styling as needed */
+}
+
+.hidden-icon {
+display: none;
+}
+
+.navigation {
+width: 250px;
+background-color: #333;
+color: #fff;
+height: 94vh;
+position: fixed;
+bottom: 0;
+overflow-y: auto;
+width: 18%;
+padding-top: 50px;
+transition: width 0.3s ease;
+box-shadow: 4px 0px 8px rgba(0, 0, 0, 0.1);
+text-align: center;
+}
+
+.admin {
+  display: flex;
+  margin-top: 90px;
+  margin-bottom: 12px;
+  background-color: #333;
+  height: 65px;
+  width: 90%;
+  position: fixed;
+  top: 0px;
+}
+
+.admin p{
+font-size: 24px;
+font-weight: bold;
+color: #fff;
+margin-top: 15px;
+text-align: center;
+margin-left: 50px;
+}
+
+.admin img{
+margin-right: 15px;
+}
+
+.navigation.active {
+width: 0;
+}
+.navigation a span {
+vertical-align: middle; /* Align the first letter of the label vertically */
+}
+.navigation a {
+display: flex; /* Use flexbox to align icon and text */
+align-items: center; /* Center items vertically */
+padding: 15px;
+color: #fff;
+text-decoration: none;
+transition: background-color 0.3s ease;
+margin-left: 10px;
+}
+
+.navigation a i {
+font-size: 18px;
+margin-right: 15px;
+color: #fff;
+}
+
+.navigation hr{
+font-weight: bold;
+}
+.navigation a:hover i,
+.navigation a:hover {
+background-color: #6c757d;
+border: none solid #6c757d;
+border-radius: 8px;
+}
+
+
+.hidden-text {
+  display: none;
+}
+.title-with-icon{
+  margin-left: 288px;
+  display: flex;
+  margin-top: 85px;
+  margin-bottom: 12px;
+  background-color: #fff;
+  height: 60px;
+  width: 90%;
+  position: fixed;
+  top: 0px;
+}
+.title-with-icon {
+margin-left: 288px;
+display: flex;
+background-color: #fff;
+height: 70px;
+width: 90%;
+position: fixed;
+top: 0px;
+box-shadow: 0 0 10px black;
+}
+
+.title-with-icon a i {
+font-size: 30px;
+color: #000;
+}
+
+.title-with-icon a {
+border: 2px solid yellow;
+height: 40px;
+width: 40px; /* Ensure the icon container has fixed dimensions */
+display: flex;
+justify-content: center; /* Center the icon horizontally */
+align-items: center; /* Center the icon vertically */
+margin-left: 32px;
+margin-top: 15px;
+padding: 5px; /* Add padding to center the icon within the border */
+box-shadow: 0 0 2px black;
+}
+
+.title-with-icon h3{
+margin-left: 10px;
+margin-top: 15px;
+}
+.dashboard {
+padding: 20px;
+margin-top: 190px; /* Adjust margin-top to be greater than the height of .title-with-icon */
+box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+text-align: center;
+width: 79%;
+margin-left: 312px;
+border-radius: 10px;
+background-color: #fff;
+display: flex;
+flex-direction: column;
+align-items: flex-end;
+border-top: 9px solid #0078d4;
+}
+
+.dashboard hr{
+     width: 100%;
+}
+.title-with-icon1 {
+  display: inline-flex;
+  align-items: center; /* Align items vertically */ /* Align items horizontally */
+  margin-left: 0px;
+}
+
+.title-with-icon1 i {
+  margin-right: 10px;
+  font-size: 20px; /* Adjust spacing between icon and text */
+}
+
+.title-with-icon1 h3 {
+  margin-right: 935px;/* Remove default margin of heading */
+}
+
+.title-with-icon1 button {
+  margin-left: 10px; /* Adjust spacing between heading and button */
+}
+
+
+.button-container button {
+  margin-left: 10px; /* Adjust spacing between h3 and button */
+}
+
+.btne{
+background-color: #1AA260;
+border-color: #1AA260;
+}
+
+.heading-and-buttons {
+  display: flex;
+  justify-content: space-between; /* Align items to the start and end of the container */
+  width: 100%; /* Ensure full width */
+  margin-left: 270px;
+}
+
+.dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+}
+ 
+.dashboard table th,
+.dashboard table td {
+  padding: 15px;
+  border: none; /* Remove any border on table cells */
+}
+
+.dashboard table tr {
+  border-bottom: 1px solid #ddd; /* Add bottom border to table rows */
+}
+
+.table-no-border th {
+  text-align: center; /* Adjust text alignment as needed */
+}
+.heading-and-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lab{
+margin-bottom: 10px;
+}
+
+.show-entries {
+  display: flex;
+  align-items: center;
+  width: 30%;
+  height: 20%;
+  float: left;
+  margin-top: 10px;
+}
+
+.show-entries label {
+  margin-right: 10px; /* Adjust margin as needed */
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  width: 30%;
+  height: 20%;
+  float: right;
+  margin-top: 10px;
+}
+
+.search-bar p {
+    margin-right: 10px;
+    margin-top: 14px;
+    font-size: 16px; /* Add spacing between heading and input */
+    color: lightslategrey;
+}
+
+.search-bar input[type="text"] {
+    flex: 1; /* Allow the input to grow and fill remaining space */
+}
+.la{
+  margin-left: -7px; /* Adjust spacing between icons */
+}
+
+
+/* Form styles */
+.form-container {
+display: none;
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background-color: #fff; /* Google's background color */
+padding: 20px;
+border-radius: 8px; /* Slightly rounded corners */
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); /* Google's box shadow */
+z-index: 1001;
+width: 900px; /* Keeping width */
+height: 640px; /* Keeping height */
+margin: 0 auto;
+}
+
+
+.title{
+display: flex;
+}
+
+.title i{
+font-size: 27px;
+margin-top: 5px;
+margin-left: 12px;
+}
+
+.title h2{
+margin-left: 15px;
+}
+
+.btn-close {
+position: absolute;
+right: 20px;
+color: #0078d4; /* Google's link color */
+}
+
+.form-group {
+  margin-bottom: 15px;
+  display: inline-block;
+  width: 200px; /* Adjust width as needed */
+  vertical-align: top;
+  margin-left: 10px;
+  margin-top: 15px;
+}
+
+.form-group label{
+margin-bottom: 5px;
+}
+
+.form-group:nth-child(n+5) {
+  margin-top: 10px;
+}
+
+label {
+  font-weight: bold;
+  color: #555;
+}
+
+.form-control {
+  width: calc(100% - 22px);
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn3, .btn4{
+margin-top: 0px;
+width: 110px;
+
+}
+
+.btn3{
+margin-left: -140px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: #fff;
+  margin-left: 10px;
+}
+
+.text-center{
+margin-left: 185px;
+}
+.btn-primary:hover,
+.btn-secondary:hover {
+  color: #000;
+  border: 2px solid black;
+}
+
+.navigation-buttons {
+  margin-top: 20px; /* Add margin between the buttons and the table */
+}
+
+.navigation-buttons button {
+  margin: 0px; /* Add margin between the buttons */
+}
+
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Transparent gray color */
+  z-index: 1000; /* Ensure the overlay is above other content */
+  display: none; /* Initially hidden */
+}
+
+.blurred-background {
+/* Styles for the blurred background */
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+backdrop-filter: blur(8px); /* Apply blur filter */
+z-index: 999; /* Ensure the blurred background is below the overlay */
+pointer-events: none; /* Allow clicks to pass through to the elements below */
+}
+
+
+.active-overlay {
+  display: block;
+}
+
+.button-margin{
+margin-left: 282px;
+margin-top: 14px;
+}
+
+.btn2{
+color: lightslategray;
+background-color: #fff;
+border: 2px solid lightslategray;
+width: 100px;
+margin-right: -30px;
+}
+
+
+.btn1{
+color: lightslategray;
+background-color: #fff;
+border: 2px solid lightslategray;
+width: 70px;
+}
+
+.button-margin1{
+margin-top: 20px;
+}
+
+/* General reset for footer */
+.footer {
+background-color: #fff; /* Background color of the footer */
+color: #0078d4; /* Text color of the footer */
+padding: 20px 0; /* Padding of the footer */
+text-align: left; /* Center align text in the footer */
+width:82%;
+margin-left: 288px;
+margin-top: 130px;
+position: fixed;
+}
+
+/* Optional: Style the container within the footer */
+.footer .container {
+width: 85%; /* Maximum width of the container */
+margin: 0 auto; /* Center align container */
+}
+
+/* Optional: Style the text within the footer */
+.footer p {
+margin: 0; /* Remove default margin of paragraphs */
+margin-left: -90px;
+font-weight: bold;
+}
+
+/* Optional: Style links within the footer */
+.footer a {
+color: #fff; /* Text color of links */
+text-decoration: none; /* Remove underline from links */
+}
+
+/* Responsive styles */
+@media only screen and (max-width: 768px) {
+  .profile-icon {
+    display: none;
+  }
+  .hamburger {
+    display: block;
+  }
+  .navigation {
+    width: 0;
+    padding-top: 70px;
+  }
+  .dashboard {
+    padding-top: 120px; /* Adjust padding-top to avoid overlapping with the fixed header */
+  }
+  .navigation.active {
+    width: 250px;
+  }
+}
