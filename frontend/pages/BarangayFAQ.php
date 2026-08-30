@@ -44,8 +44,6 @@ require __DIR__ . '/../partials/admin_top.php';
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search questions…">
         </div>
         <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
-        <span class="spacer"></span>
-        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
 
     <div class="card-bd">
@@ -73,7 +71,7 @@ require __DIR__ . '/../partials/admin_top.php';
         <?php endif; ?>
     </div>
 
-    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
+    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search], $perPage) ?>
 </div>
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-hidden="true">

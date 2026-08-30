@@ -46,13 +46,12 @@ require __DIR__ . '/../partials/admin_top.php';
   <div class="col-12">
     <div class="card">
         <form class="table-toolbar" method="get">
-            <span class="card-hd__title"><i class="bi bi-inbox"></i> Inbox</span>
-            <span class="spacer"></span>
+            <span class="card-hd__title me-2"><i class="bi bi-inbox"></i> Inbox</span>
             <div class="field-search">
                 <i class="bi bi-search"></i>
                 <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search sender or email…">
             </div>
-            <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+            <?php if ($search): ?><a class="btn btn-sm btn-outline-secondary" href="?">Clear</a><?php endif; ?>
         </form>
         <div class="table-wrap">
             <table class="data">
@@ -80,7 +79,7 @@ require __DIR__ . '/../partials/admin_top.php';
                 </tbody>
             </table>
         </div>
-        <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
+        <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search], $perPage) ?>
     </div>
   </div>
 

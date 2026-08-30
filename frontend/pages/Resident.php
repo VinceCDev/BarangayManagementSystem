@@ -65,8 +65,6 @@ require __DIR__ . '/../partials/admin_top.php';
         <?php if ($search || $fStatus || $fGender): ?>
             <a class="btn btn-sm btn-outline-secondary" href="?">Reset</a>
         <?php endif; ?>
-        <span class="spacer"></span>
-        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
 
     <div class="table-wrap">
@@ -116,7 +114,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?= render_pager($page, $pages, $total, $qs) ?>
+    <?= render_pager($page, $pages, $total, $qs, $perPage) ?>
 </div>
 
 <!-- Add / Edit modal ---------------------------------------------------- -->

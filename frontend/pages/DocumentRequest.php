@@ -59,8 +59,6 @@ require __DIR__ . '/../partials/admin_top.php';
         <?= filter_select('cert', (string) $fCert, ['' => 'All certificates'] + $certOptions) ?>
         <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
         <?php if ($search || $fCert): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>
-        <span class="spacer"></span>
-        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
 
     <div class="table-wrap">
@@ -92,7 +90,7 @@ require __DIR__ . '/../partials/admin_top.php';
         </table>
     </div>
 
-    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search]) ?>
+    <?= render_pager($page, $pages, $total, $qs ?? ['search' => $search], $perPage) ?>
 </div>
 
 <?php require __DIR__ . '/../partials/admin_bottom.php'; ?>

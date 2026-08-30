@@ -92,49 +92,63 @@ if (!function_exists('e')) {
 }
 
 /**
- * Render a numbered pagination bar for a list view.
+ * Render the "Showing X–Y of Z results" line plus numbered page navigation,
+ * placed BELOW the table. Always rendered (the page buttons only appear when
+ * there is more than one page).
  *
- * @param int   $page   current page (1-based)
- * @param int   $pages  total number of pages
- * @param int   $total  total row count (for the summary line)
- * @param array $query  extra query-string params to keep (search, filters…)
+ * @param int   $page     current page (1-based)
+ * @param int   $pages    total number of pages
+ * @param int   $total    total row count
+ * @param array $query    extra query-string params to keep (search, filters…)
+ * @param int   $perPage  rows per page (for the "X–Y of Z" range)
  */
-function render_pager(int $page, int $pages, int $total, array $query = []): string
+function render_pager(int $page, int $pages, int $total, array $query = [], int $perPage = 0): string
 {
-    if ($pages <= 1) {
-        return '';
+    // "Showing 1–8 of 42 results"
+    if ($total === 0) {
+        $summary = 'No results';
+    } elseif ($perPage > 0) {
+        $from = ($page - 1) * $perPage + 1;
+        $to   = min($total, $page * $perPage);
+        $summary = 'Showing <strong>' . number_format($from) . '–' . number_format($to)
+                 . '</strong> of <strong>' . number_format($total) . '</strong> result' . ($total === 1 ? '' : 's');
+    } else {
+        $summary = '<strong>' . number_format($total) . '</strong> result' . ($total === 1 ? '' : 's');
     }
-    $link = static function (int $p, string $label, bool $disabled = false, bool $active = false) use ($query): string {
-        $cls = 'page-link';
-        if ($disabled) return '<li class="page-item disabled"><span class="page-link">' . $label . '</span></li>';
-        if ($active)   return '<li class="page-item active"><span class="page-link">' . $label . '</span></li>';
-        $qs = http_build_query($query + ['page' => $p]);
-        return '<li class="page-item"><a class="page-link" href="?' . e($qs) . '">' . $label . '</a></li>';
-    };
 
-    // window of page numbers around the current page
-    $start = max(1, $page - 2);
-    $end   = min($pages, $start + 4);
-    $start = max(1, $end - 4);
+    $nav = '';
+    if ($pages > 1) {
+        $link = static function (int $p, string $label, bool $disabled = false, bool $active = false) use ($query): string {
+            if ($disabled) return '<li class="page-item disabled"><span class="page-link">' . $label . '</span></li>';
+            if ($active)   return '<li class="page-item active"><span class="page-link">' . $label . '</span></li>';
+            $qs = http_build_query($query + ['page' => $p]);
+            return '<li class="page-item"><a class="page-link" href="?' . e($qs) . '">' . $label . '</a></li>';
+        };
 
-    $items  = $link($page - 1, '&laquo;', $page <= 1);
-    if ($start > 1) {
-        $items .= $link(1, '1');
-        if ($start > 2) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+        $start = max(1, $page - 2);
+        $end   = min($pages, $start + 4);
+        $start = max(1, $end - 4);
+
+        $items  = $link($page - 1, '&laquo;', $page <= 1);
+        if ($start > 1) {
+            $items .= $link(1, '1');
+            if ($start > 2) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+        }
+        for ($i = $start; $i <= $end; $i++) {
+            $items .= $link($i, (string) $i, false, $i === $page);
+        }
+        if ($end < $pages) {
+            if ($end < $pages - 1) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
+            $items .= $link($pages, (string) $pages);
+        }
+        $items .= $link($page + 1, '&raquo;', $page >= $pages);
+
+        $nav = '<nav aria-label="Pagination"><ul class="pagination pagination-sm mb-0">' . $items . '</ul></nav>';
     }
-    for ($i = $start; $i <= $end; $i++) {
-        $items .= $link($i, (string) $i, false, $i === $page);
-    }
-    if ($end < $pages) {
-        if ($end < $pages - 1) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
-        $items .= $link($pages, (string) $pages);
-    }
-    $items .= $link($page + 1, '&raquo;', $page >= $pages);
 
     return '<div class="card-ft pager">'
-         . '<span class="pager__info">' . number_format($total) . ' record' . ($total === 1 ? '' : 's')
-         . ' · page ' . $page . ' of ' . $pages . '</span>'
-         . '<nav aria-label="Pagination"><ul class="pagination pagination-sm mb-0">' . $items . '</ul></nav>'
+         . '<span class="pager__info">' . $summary . '</span>'
+         . $nav
          . '</div>';
 }
 
