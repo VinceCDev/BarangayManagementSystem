@@ -1,112 +1,45 @@
-<!DOCTYPE html> 
-<html lang="en"> 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photos</title>
-    <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/Photos.css">
-    <style>
-    .gallery {
-        justify-content: center;
-        align-items: center;
-        padding: 40px 0;
-        margin-top: -270px
-    }
-    </style>
-    <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/public-theme.css">
-</head> 
-<body class="public">
-    <header class="header"> 
-        <a href="#" class="logo">
-            <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Error Image" height="60px" width="60px"/>
-            <h2>Barangay Paule 1</h2> 
-        </a>
-        <button class="hamburger" onclick="toggleMenu()"> 
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </button>
-        <nav class="navigation"> 
-            <a href="index.php" style="--i:1">Home</a>
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                    Our Barangay</button>
-                <div class="dropdown-content">
-                  <a href="GeneralInformation.php">General Information</a>
-                  <a href="History.php">History</a>
-                  <a href="Maps.php">Maps</a>
-                  <a href="Photos.php" style="background-color: #F4B400; color: #000; padding: 12px; border-radius: 30px;">Photo Album</a>
+<?php
+/** Photos.php — public photo album of barangay activities. */
+require __DIR__ . '/../partials/bootstrap.php';
+
+$photos = db()->query('SELECT photos, activity, date, description FROM activity ORDER BY date DESC, id DESC')->fetchAll();
+
+$page_title = 'Photo Album';
+$active     = 'photos';
+require __DIR__ . '/../partials/public_top.php';
+?>
+
+<header class="hero" style="min-height:34vh;--hero-img:linear-gradient(#0b2f6e,#123f92)">
+    <div class="container">
+        <p class="section__eyebrow text-white-50">Our Barangay</p>
+        <h1>Photo Album</h1>
+        <p>Moments from barangay activities and community events.</p>
+    </div>
+</header>
+
+<section class="section">
+    <div class="container">
+        <?php if (!$photos): ?>
+            <p class="text-center text-muted-2">No photos have been added yet.</p>
+        <?php else: ?>
+        <div class="row g-4">
+            <?php foreach ($photos as $p): ?>
+            <div class="col-sm-6 col-lg-4">
+                <div class="card h-100 hover-lift">
+                    <img src="<?= upload_url('activity_photos/' . ($p['photos'] ?? '')) ?>" alt="<?= e($p['activity']) ?>"
+                         style="height:220px;object-fit:cover;border-radius:var(--radius) var(--radius) 0 0;background:var(--brand-50)"
+                         onerror="this.src='<?= asset('images/logo1.png') ?>';this.style.objectFit='contain';this.style.padding='2rem'">
+                    <div class="card-bd">
+                        <div class="text-caption mb-1"><i class="bi bi-calendar-event me-1"></i><?= e($p['date'] ? date('F j, Y', strtotime((string) $p['date'])) : '') ?></div>
+                        <h3 class="h6 mb-1"><?= e($p['activity']) ?></h3>
+                        <p class="small text-muted-2 mb-0"><?= e($p['description']) ?></p>
+                    </div>
                 </div>
             </div>
-            <a href="Certificate.php" style="--i:3">Services</a>
-            <a href="FAQ.php" style="--i:4">FAQ</a>
-            <a href="Contact.php" style="--i:5">Contacts</a>
-        </nav> 
-    </header> 
-    <section id="photos" class="photos">
-        <h3>Photo Albums</h3> 
-        <p class="p1">Here are the photos of barangay.</p>
-        <hr>
-        <section class="gallery">
-            <div class="container">
-              <div class="row">
-                <?php
-                  require __DIR__ . '/../../connection.php';
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+</section>
 
-                  $sql = "SELECT * FROM activity"; 
-                  $result = $conn->query($sql);
-
-                  if ($result->num_rows > 0) {
-                      $count = 0; 
-                      while ($row = $result->fetch_assoc()) {
-                          $photo  = $row["photos"];
-                          $date  = $row["date"];
-                          $activity  = $row["activity"];
-                          ?>
-                          <?php if ($count % 3 == 0 && $count != 0) { ?>
-                              </div><div class="row">
-                          <?php } ?>
-                          <div class="col-md-4 gallery-column">
-                              <div class="card">
-                                  <img src="/BarangayManagementSystem-main/upload/activity_photos/<?php echo $photo; ?>" class="card-img-top" alt="Photo">
-                                  <div class="card-body">
-                                      <h5 class="card-title"><?php echo $activity; ?></h5>
-                                      <p class="card-text"><?php echo $date; ?></p>
-                                  </div>
-                              </div>
-                          </div>
-                          <?php
-                          $count++;
-                      }
-                  } else {
-                      echo "No activity found";
-                  }
-                  $conn->close();
-                ?>
-              </div>     
-            </div>
-          </section>
-    </section>
-    <footer> 
-      <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p> 
-    </footer>
-    <script src="/BarangayManagementSystem-main/frontend/assets/js/index.js"></script>    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleMenu() {
-            var navigation = document.querySelector('.navigation');
-            var hamburger = document.querySelector('.hamburger');
-
-            navigation.classList.toggle('active');
-
-            hamburger.classList.toggle('active');
-        }
-    </script>
-</body> 
-</html>
+<?php require __DIR__ . '/../partials/public_bottom.php'; ?>

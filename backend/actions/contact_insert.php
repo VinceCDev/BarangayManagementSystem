@@ -1,71 +1,74 @@
 <?php
+/**
+ * contact_insert.php — public "Contact us" form handler.
+ * Stores the message and (best effort) emails the barangay inbox.
+ * POST: name, age, email, contact, message
+ */
+declare(strict_types=1);
+
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\Exception as MailException;
 
-// Include PHPMailer files
-require '../lib/PHPmailer/src/Exception.php';
-require '../lib/PHPmailer/src/PHPMailer.php';
-require '../lib/PHPmailer/src/SMTP.php';
+require __DIR__ . '/../../connection.php';                 // db(), constants
+$config = require __DIR__ . '/../config/config.php';
 
-require __DIR__ . '/../../connection.php';
+$back = PAGES_URL . '/Contact.php';
 
-// Check if form is submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve form data
-    $name = $_POST['name'];
-    $age = $_POST['age'];
-    $email = $_POST['email'];
-    $contact = $_POST['contact']; // Added line to retrieve contact number
-    $message = $_POST['message'];
-
-    // Prepare SQL statement
-    $sql = "INSERT INTO receivemessages (name, age, email, contact, message) VALUES (?, ?, ?, ?, ?)";
-    
-    // Prepare and bind parameters
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sisss", $name, $age, $email, $contact, $message); // Modified line to bind contact number
-
-    // Execute the statement
-    if ($stmt->execute()) {
-        // Create a new PHPMailer instance
-        $mail = new PHPMailer(true);
-        try {
-            // Server settings
-            $mail->isSMTP(); // Set mailer to use SMTP
-            $mail->Host = 'smtp.gmail.com'; // Your SMTP server
-            $mail->SMTPAuth = true; // Enable SMTP authentication
-            $mail->Username = 'allencristal23@gmail.com'; // SMTP username
-            $mail->Password = 'phvzoeaybkfvftzl'; // SMTP password
-            $mail->SMTPSecure = 'ssl'; // Enable TLS encryption, `ssl` also accepted
-            $mail->Port = 465; // TCP port to connect to
-
-            // Sender information
-            $mail->setFrom($_POST["email"]); // Sender's email address and name
-            $mail->addAddress('allencristal23@gmail.com'); // Recipient's email address
-            $mail->addReplyTo($email, $name); // Reply-to address
-
-            // Content
-            $mail->isHTML(true); // Set email format to HTML
-            $mail->Subject = 'Message from Contact Form';
-            $mail->Body = "Name: $name<br>Age: $age<br>Email: $email<br>Contact: $contact<br>Message: $message"; // Modified line to include contact number
-
-            // Send email
-            $mail->send();
-            echo 'success'; // Email sent successfully
-        } catch (Exception $e) {
-            echo "error: {$mail->ErrorInfo}"; // Error sending email
-        }
-        
-        // Redirect to Contact1.php
-        header("Location: /BarangayManagementSystem-main/frontend/pages/Contact.php");
-        exit();
-    } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
-    }
-
-    // Close statement and connection
-    $stmt->close();
-    $conn->close();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . $back);
+    exit;
 }
 
-?>
+$name    = trim($_POST['name'] ?? '');
+$age     = ($_POST['age'] ?? '') === '' ? null : (int) $_POST['age'];
+$email   = trim($_POST['email'] ?? '');
+$contact = trim($_POST['contact'] ?? '');
+$message = trim($_POST['message'] ?? '');
+
+if ($name === '' || $email === '' || $message === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    header('Location: ' . $back . '?sent=invalid');
+    exit;
+}
+
+try {
+    $stmt = db()->prepare(
+        'INSERT INTO receivemessages (name, age, email, contact, message) VALUES (?, ?, ?, ?, ?)'
+    );
+    $stmt->execute([$name, $age, $email, $contact, $message]);
+} catch (Throwable $e) {
+    error_log('contact_insert.php (db): ' . $e->getMessage());
+    header('Location: ' . $back . '?sent=error');
+    exit;
+}
+
+// Best-effort e-mail notification — never block the user if SMTP fails.
+try {
+    require_once __DIR__ . '/../lib/PHPmailer/src/Exception.php';
+    require_once __DIR__ . '/../lib/PHPmailer/src/PHPMailer.php';
+    require_once __DIR__ . '/../lib/PHPmailer/src/SMTP.php';
+
+    $m = $config['mail'];
+    $mail = new PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host       = $m['host'];
+    $mail->SMTPAuth   = true;
+    $mail->Username   = $m['username'];
+    $mail->Password   = $m['password'];
+    $mail->SMTPSecure = $m['encryption'];
+    $mail->Port       = (int) $m['port'];
+    $mail->setFrom($m['from_email'], $m['from_name']);
+    $mail->addAddress($m['to_email']);
+    $mail->addReplyTo($email, $name);
+    $mail->isHTML(true);
+    $mail->Subject = 'New message from the barangay contact form';
+    $mail->Body    = nl2br(htmlspecialchars(
+        "Name: $name\nAge: " . ($age ?? '—') . "\nEmail: $email\nContact: $contact\n\n$message",
+        ENT_QUOTES
+    ));
+    $mail->send();
+} catch (Throwable $e) {
+    error_log('contact_insert.php (mail): ' . $e->getMessage());
+}
+
+header('Location: ' . $back . '?sent=ok');
+exit;
