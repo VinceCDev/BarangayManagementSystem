@@ -39,7 +39,7 @@ $is = fn(string $k) => $active === $k ? 'active' : '';
 
 <nav class="navbar navbar-expand-lg site-nav">
     <div class="container">
-        <a class="navbar-brand" href="<?= page_url('index.php') ?>">
+        <a class="navbar-brand" href="<?= home_url() ?>">
             <img src="<?= asset('images/logo1.png') ?>" alt="Barangay Paule 1 seal">
             <span class="bn"><b>Barangay Paule 1</b><span>Rizal, Laguna</span></span>
         </a>
@@ -48,7 +48,7 @@ $is = fn(string $k) => $active === $k ? 'active' : '';
         </button>
         <div class="collapse navbar-collapse" id="pubnav">
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
-                <li class="nav-item"><a class="nav-link <?= $is('home') ?>" href="<?= page_url('index.php') ?>">Home</a></li>
+                <li class="nav-item"><a class="nav-link <?= $is('home') ?>" href="<?= home_url() ?>">Home</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?= $is('info') . $is('history') . $is('maps') . $is('photos') ?>"
                        href="#" data-bs-toggle="dropdown">Our Barangay</a>
@@ -63,8 +63,11 @@ $is = fn(string $k) => $active === $k ? 'active' : '';
                 <li class="nav-item"><a class="nav-link <?= $is('faq') ?>" href="<?= page_url('FAQ.php') ?>">FAQ</a></li>
                 <li class="nav-item"><a class="nav-link <?= $is('contact') ?>" href="<?= page_url('Contact.php') ?>">Contact</a></li>
                 <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
-                    <a class="btn btn-primary px-3" href="<?= page_url('Login.php') ?>">
-                        <i class="bi bi-box-arrow-in-right me-1"></i>Staff Login
+                    <a class="nav-link fw-semibold" href="<?= page_url('Login.php') ?>">Sign in</a>
+                </li>
+                <li class="nav-item mt-1 mt-lg-0">
+                    <a class="btn btn-primary px-3" href="<?= page_url('Register.php') ?>">
+                        <i class="bi bi-person-plus me-1"></i>Sign up
                     </a>
                 </li>
             </ul>

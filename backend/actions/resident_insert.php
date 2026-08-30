@@ -3,10 +3,10 @@
 session_start();
 
 // Include the database connection file
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 // Establish connection to the file management system database
-    require_once __DIR__ . '/../../connection.php'; // $conn + $fileManagementConn come from backend/config
+    require_once __DIR__ . '/../connection.php'; // $conn + $fileManagementConn come from backend/config
 
 // Function to upload file and return the file path
 function uploadFile($file, $folder)

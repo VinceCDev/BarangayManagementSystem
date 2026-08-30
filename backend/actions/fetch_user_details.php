@@ -1,6 +1,6 @@
 <?php
 // Include connection.php to establish database connection
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 // Get the user ID from the URL parameter
 $userId = $_GET['id'];

@@ -2,10 +2,10 @@
 // Check if the request method is GET and if 'id' parameter is set
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['id'])) {
     // Include the database connection file
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
 
     // Establish a separate database connection for the file management system
-    require_once __DIR__ . '/../../connection.php'; // $conn + $fileManagementConn come from backend/config
+    require_once __DIR__ . '/../connection.php'; // $conn + $fileManagementConn come from backend/config
 
     // Check the connection for the file management system
     if ($fileManagementConn->connect_error) {

@@ -6,7 +6,7 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/../../connection.php';                 // db(), constants
+require __DIR__ . '/../connection.php';                 // db(), constants
 require __DIR__ . '/../../backend/helpers/functions.php';   // save_uploaded_image()
 
 if (session_status() === PHP_SESSION_NONE) {

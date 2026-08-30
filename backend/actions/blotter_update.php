@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             WHERE id='$blotterId'";
 
     // Include database connection
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
 
     // Execute update query
     if ($conn->query($sql) === TRUE) {

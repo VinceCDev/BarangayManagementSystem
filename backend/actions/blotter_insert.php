@@ -1,6 +1,6 @@
 <?php
 // Include the database connection file
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 // Retrieve form data from POST request
 $status = $_POST['status'];

@@ -552,15 +552,35 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
     --a-accent:   var(--brand-500);
     --a-accent-h: var(--brand-600);
 
+    position: relative;
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
     padding: clamp(12px, 3vw, 40px);
-    background:
-        radial-gradient(70% 55% at 12% 0%, rgba(28, 95, 214, .10), transparent 60%),
-        var(--bg);                                   /* mostly off-white */
+    overflow: hidden;
     color: var(--ink);
     font-family: var(--font);
+    background:
+        radial-gradient(38rem 38rem at 8% -6%,  rgba(28, 95, 214, .18), transparent 70%),
+        radial-gradient(34rem 34rem at 100% 108%, rgba(15, 63, 146, .20), transparent 70%),
+        radial-gradient(26rem 26rem at 92% 2%,  rgba(10, 162, 192, .10), transparent 70%),
+        linear-gradient(180deg, #eef3fb 0%, var(--bg) 55%, #e8eef8 100%);
 }
+/* faint dot-grid + a couple of soft geometric shapes behind the card */
+.auth-page::before {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(15, 63, 146, .10) 1px, transparent 1.6px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(120% 120% at 50% 50%, #000 30%, transparent 78%);
+            mask-image: radial-gradient(120% 120% at 50% 50%, #000 30%, transparent 78%);
+}
+.auth-page::after {
+    content: ""; position: absolute; z-index: 0; pointer-events: none;
+    right: -14vw; top: -14vw; width: 42vw; height: 42vw; min-width: 320px; min-height: 320px;
+    border-radius: 42% 58% 60% 40% / 45% 45% 55% 55%;
+    background: linear-gradient(140deg, rgba(28, 95, 214, .10), rgba(28, 95, 214, 0));
+    filter: blur(2px);
+}
+.auth-page > * { position: relative; z-index: 1; }
 
 .auth-shell {
     width: min(940px, 100%);

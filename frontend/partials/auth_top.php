@@ -35,7 +35,7 @@ $visual_lines  = $visual_lines  ?? [
             <span class="auth-visual__logo">
                 <img src="<?= asset('images/logo1.png') ?>" alt="">Barangay Paule 1
             </span>
-            <a class="auth-visual__back" href="<?= page_url('index.php') ?>">
+            <a class="auth-visual__back" href="<?= home_url() ?>">
                 Back to website <i class="bi bi-arrow-up-right"></i>
             </a>
         </div>

@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/../../connection.php';           // $conn, db()
+require __DIR__ . '/../connection.php';           // $conn, db()
 require __DIR__ . '/../../backend/helpers/auth.php';
 require_login();
 

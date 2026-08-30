@@ -9,7 +9,7 @@ declare(strict_types=1);
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as MailException;
 
-require __DIR__ . '/../../connection.php';                 // db(), constants
+require __DIR__ . '/../connection.php';                 // db(), constants
 $config = require __DIR__ . '/../config/config.php';
 
 // Return to Contact.php by default, or MyMessages.php when a resident sends

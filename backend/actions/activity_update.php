@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 // Check if form data is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

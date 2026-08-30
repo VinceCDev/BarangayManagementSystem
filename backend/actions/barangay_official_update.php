@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check if the official ID is set

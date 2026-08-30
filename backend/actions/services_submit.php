@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 require __DIR__ . '/../../backend/helpers/auth.php';
 require_login('/BarangayManagementSystem-main/frontend/pages/Login.php');
 
@@ -120,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Save to the second location ($pdfFolder)
             $pdf->Output('F', $pdfFolder . $pdfFilename);
 
-    require_once __DIR__ . '/../../connection.php'; // $conn + $fileManagementConn come from backend/config
+    require_once __DIR__ . '/../connection.php'; // $conn + $fileManagementConn come from backend/config
             $insertSql = "INSERT INTO request_file (request_id, request_from, person_requested, person_email, created_date) VALUES (?, ?, ?, ?, ?)";
             $insertStmt = $fileManagementConn->prepare($insertSql);
             $request_from = $pdfFilename; // Assuming the PDF file name is the source of the request

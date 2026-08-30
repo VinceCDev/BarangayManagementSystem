@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/../../connection.php';           // db(), constants
+require __DIR__ . '/../connection.php';           // db(), constants
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . PAGES_URL . '/Other Info.php');

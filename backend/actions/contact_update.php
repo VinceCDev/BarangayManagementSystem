@@ -1,7 +1,7 @@
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Include database connection
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
 
     // Get form data
     $contact_id = $_POST['contact_id'];

@@ -1,7 +1,7 @@
 <?php
 // Establish database connection
-    require_once __DIR__ . '/../../connection.php'; // $conn + $fileManagementConn come from backend/config
-require __DIR__ . '/../../connection.php';
+    require_once __DIR__ . '/../connection.php'; // $conn + $fileManagementConn come from backend/config
+require __DIR__ . '/../connection.php';
 
 // Check if 'id' parameter is set in the URL and is numeric
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {

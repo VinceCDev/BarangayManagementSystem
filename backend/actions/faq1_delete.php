@@ -1,6 +1,6 @@
 <?php
 // Include the database connection file
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 // Check if the 'delete_id' parameter is set in the POST request and is not empty
 if(isset($_POST['delete_id']) && !empty($_POST['delete_id'])) {

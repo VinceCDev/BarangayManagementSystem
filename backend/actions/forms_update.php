@@ -5,7 +5,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check if the form fields are set
     if (isset($_POST["certificate"]) && isset($_POST["requirements"]) && isset($_POST["forms_id"])) {
         // Database connection
-        require __DIR__ . '/../../connection.php';
+        require __DIR__ . '/../connection.php';
 
         // Prepare SQL statement to update the record
         $sql = "UPDATE certificates SET certificate_name=?, requirements=? WHERE id=?";

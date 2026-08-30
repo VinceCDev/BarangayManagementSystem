@@ -1,6 +1,6 @@
 <?php
     // Include database connection
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
     
     // Check if 'id' parameter is set in the URL and is not empty
     if(isset($_GET['id']) && !empty($_GET['id'])) {

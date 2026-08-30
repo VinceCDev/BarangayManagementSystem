@@ -12,8 +12,8 @@ require __DIR__ . '/../partials/auth_top.php';
 ?>
 
 <h1>Welcome back</h1>
-<p class="sub">Sign in to the management console.
-    New here? <a href="<?= page_url('Contact.php') ?>">Contact your administrator</a>.</p>
+<p class="sub">Sign in to your account.
+    New resident? <a href="<?= page_url('Register.php') ?>">Create an account</a>.</p>
 
 <form id="loginForm" novalidate>
     <div class="field has-icon">
@@ -43,7 +43,7 @@ require __DIR__ . '/../partials/auth_top.php';
     <button type="submit" class="btn-auth"><i class="bi bi-box-arrow-in-right"></i> Sign in</button>
 </form>
 
-<p class="foot-note"><a href="<?= page_url('index.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to public site</a></p>
+<p class="foot-note"><a href="<?= home_url() ?>"><i class="bi bi-arrow-left me-1"></i>Back to public site</a></p>
 
 <?php
 $loginAction = action_url('login_test.php');

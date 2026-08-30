@@ -2,7 +2,7 @@
 // Check if the request method is POST and if the ID parameter is set
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
     // Connect to the database
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
 
     // Get the user ID from the POST data
     $userId = $_POST['id'];

@@ -1,5 +1,5 @@
 <?php
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
 
     // Assuming you have received the data from the form
     $firstname = $_POST['firstname'];

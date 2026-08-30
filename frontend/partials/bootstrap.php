@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../connection.php';          // $conn, $fileManagementConn, db(), constants
+require_once __DIR__ . '/../../backend/connection.php';          // $conn, $fileManagementConn, db(), constants
 require_once __DIR__ . '/../../backend/helpers/auth.php'; // session + require_login()
 
 /** Absolute URL helpers built from BASE_URL (defined in config/database.php). */
@@ -45,6 +45,8 @@ function asset(string $path): string
 function page_url(string $file): string { return PAGES_URL . '/' . ltrim($file, '/'); }
 function action_url(string $file): string { return ACTIONS_URL . '/' . ltrim($file, '/'); }
 function upload_url(string $path): string { return UPLOAD_URL . '/' . ltrim($path, '/'); }
+/** The public home page (index.php now lives at the project root). */
+function home_url(): string { return BASE_URL . '/'; }
 
 /** Guard for the admin panel. Also handles the ?logout=1 link in the top bar. */
 function require_admin(): void

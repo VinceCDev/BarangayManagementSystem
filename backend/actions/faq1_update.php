@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $date = $_POST["date"];
         
         // Database connection
-        require __DIR__ . '/../../connection.php';
+        require __DIR__ . '/../connection.php';
 
         // Prepare SQL statement to update the record
         $sql = "UPDATE faq SET question=?, answer=?, date=? WHERE id=?";

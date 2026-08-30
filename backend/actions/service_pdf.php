@@ -5,7 +5,7 @@ require(__DIR__ . '/../lib/fpdi2/src/autoload.php'); // Ensure the correct path 
 use setasign\Fpdi\Fpdi;
 
 // Fetch data from the database
-require __DIR__ . '/../../connection.php'; // Your connection.php file
+require __DIR__ . '/../connection.php'; // Your connection.php file
 
 // Suppress warnings
 error_reporting(E_ALL & ~E_NOTICE);

@@ -4,7 +4,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check if the official ID is set
     if (isset($_POST["official_id"])) {
         // Database connection
-        require __DIR__ . '/../../connection.php';
+        require __DIR__ . '/../connection.php';
         
         // Get resident ID from the form
         $resident_id = $_POST["official_id"];

@@ -3,7 +3,7 @@
 // Check if the form data is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Database connection
-    require __DIR__ . '/../../connection.php';
+    require __DIR__ . '/../connection.php';
 
     // Get data from POST request
     $firstname = $_POST['firstname'];

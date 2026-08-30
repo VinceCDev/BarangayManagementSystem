@@ -1,6 +1,6 @@
 <?php
 // Include the database connection file
-require __DIR__ . '/../../connection.php';
+require __DIR__ . '/../connection.php';
 
 // Check if the 'id' parameter is set in the URL
 if(isset($_GET['id'])) {

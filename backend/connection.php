@@ -19,9 +19,9 @@
  * ---------------------------------------------------------------------------
  */
 
-require_once __DIR__ . '/backend/config/database.php';
+require_once __DIR__ . "/config/database.php";
 
-$__cfg = require __DIR__ . '/backend/config/config.php';
+$__cfg = require __DIR__ . "/config/config.php";
 
 /** @var mysqli $conn                Primary business database. */
 $conn = make_mysqli($__cfg['db']);
