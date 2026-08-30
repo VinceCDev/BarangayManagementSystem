@@ -560,25 +560,27 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
     color: var(--ink);
     font-family: var(--font);
     background:
-        radial-gradient(38rem 38rem at 8% -6%,  rgba(28, 95, 214, .18), transparent 70%),
-        radial-gradient(34rem 34rem at 100% 108%, rgba(15, 63, 146, .20), transparent 70%),
-        radial-gradient(26rem 26rem at 92% 2%,  rgba(10, 162, 192, .10), transparent 70%),
-        linear-gradient(180deg, #eef3fb 0%, var(--bg) 55%, #e8eef8 100%);
+        radial-gradient(46rem 46rem at 2% -12%,  rgba(28, 95, 214, .55), transparent 62%),
+        radial-gradient(42rem 42rem at 104% 112%, rgba(11, 47, 110, .62), transparent 60%),
+        radial-gradient(30rem 30rem at 96% -4%,   rgba(10, 162, 192, .38), transparent 60%),
+        linear-gradient(160deg, #c3d8f6 0%, #a9c6f0 42%, #cadcf5 100%);
 }
-/* faint dot-grid + a couple of soft geometric shapes behind the card */
+/* bold dot-grid + a big diagonal band + a solid shape behind the card */
 .auth-page::before {
     content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background-image: radial-gradient(rgba(15, 63, 146, .10) 1px, transparent 1.6px);
-    background-size: 26px 26px;
-    -webkit-mask-image: radial-gradient(120% 120% at 50% 50%, #000 30%, transparent 78%);
-            mask-image: radial-gradient(120% 120% at 50% 50%, #000 30%, transparent 78%);
+    background-image:
+        repeating-linear-gradient(135deg, rgba(11, 47, 110, .06) 0 2px, transparent 2px 26px),
+        radial-gradient(rgba(11, 47, 110, .22) 1.6px, transparent 2.2px);
+    background-size: auto, 24px 24px;
+    -webkit-mask-image: radial-gradient(135% 135% at 50% 50%, #000 42%, transparent 88%);
+            mask-image: radial-gradient(135% 135% at 50% 50%, #000 42%, transparent 88%);
 }
 .auth-page::after {
     content: ""; position: absolute; z-index: 0; pointer-events: none;
-    right: -14vw; top: -14vw; width: 42vw; height: 42vw; min-width: 320px; min-height: 320px;
+    right: -12vw; top: -16vw; width: 46vw; height: 46vw; min-width: 340px; min-height: 340px;
     border-radius: 42% 58% 60% 40% / 45% 45% 55% 55%;
-    background: linear-gradient(140deg, rgba(28, 95, 214, .10), rgba(28, 95, 214, 0));
-    filter: blur(2px);
+    background: linear-gradient(140deg, rgba(28, 95, 214, .30), rgba(28, 95, 214, .04));
+    box-shadow: -8vw 40vh 0 -6vw rgba(11, 47, 110, .16);
 }
 .auth-page > * { position: relative; z-index: 1; }
 
@@ -590,9 +592,12 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
     gap: 14px;
     padding: 14px;
     background: var(--surface);                       /* white card */
-    border: 1px solid var(--line);
+    border: 1px solid rgba(255, 255, 255, .7);
     border-radius: 24px;
-    box-shadow: 0 30px 70px rgba(16, 32, 44, .14);
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, .6) inset,
+        0 44px 90px rgba(11, 32, 74, .38),
+        0 12px 28px rgba(11, 32, 74, .22);
 }
 
 /* Wider shell for longer forms (sign-up) — the visual panel keeps its size,
@@ -602,6 +607,41 @@ table.data .col-actions { text-align: right; white-space: nowrap; }
 .auth-shell--wide .auth-form { justify-content: flex-start; }
 .auth-form .row .field { margin-bottom: 0; }        /* grid gap handles spacing */
 .auth-form .row .form-label { margin-top: 0; }
+
+/* --- Sign-up 2-step wizard --- */
+.reg-steps {
+    display: flex;
+    gap: 10px;
+    margin: 4px 0 18px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+.reg-steps span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+.reg-steps span + span::before {
+    content: "";
+    width: 18px;
+    height: 2px;
+    margin-right: 3px;
+    background: currentColor;
+    opacity: .35;
+}
+.reg-steps b {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(28, 95, 214, .12);
+    color: var(--brand-600);
+    font-size: .78rem;
+}
+.reg-steps span.on { color: var(--brand-600); }
+.reg-steps span.on b { background: var(--brand-500); color: #fff; }
 
 /* --- Left visual card (photo keeps its own dark overlay for white text) --- */
 .auth-visual {
