@@ -1,607 +1,191 @@
 <?php
-  session_start();
+/**
+ * Users.php — system accounts (list + add + edit + delete).
+ * Add  -> backend/actions/users_insert.php
+ * Edit -> backend/actions/user_update.php   (hidden users_id; blank password = keep)
+ * Delete (AJAX GET) -> backend/actions/user_delete.php?id=
+ *
+ * The password hash is never displayed.
+ */
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();
 
-  if (!isset($_SESSION['username'])) {
-      header("Location: Login.php");
-      exit;
-  }
+$pdo = db();
 
-  if (isset($_GET['logout'])) {
-      session_destroy();
+$search  = trim($_GET['search'] ?? '');
+$perPage = 10;
+$page    = max(1, (int) ($_GET['page'] ?? 1));
+$offset  = ($page - 1) * $perPage;
+$like    = '%' . $search . '%';
 
-      header("Location: Login.php");
-      exit;
-  }
+$st = $pdo->prepare('SELECT COUNT(*) FROM users WHERE fullName LIKE ? OR userName LIKE ?');
+$st->execute([$like, $like]);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+
+$st = $pdo->prepare(
+    'SELECT id, fullName, userName, userType FROM users
+      WHERE fullName LIKE ? OR userName LIKE ?
+      ORDER BY fullName LIMIT ? OFFSET ?'
+);
+$st->bindValue(1, $like); $st->bindValue(2, $like);
+$st->bindValue(3, $perPage, PDO::PARAM_INT);
+$st->bindValue(4, $offset, PDO::PARAM_INT);
+$st->execute();
+$rows = $st->fetchAll();
+
+$types = ['admin' => 'Administrator', 'staff' => 'Staff'];
+
+$page_title    = 'System Users';
+$page_heading  = 'System Users';
+$page_subtitle = $total . ' account' . ($total === 1 ? '' : 's');
+$active_nav    = 'users';
+$page_actions  = '<button class="btn btn-primary" onclick="openUser()"><i class="bi bi-plus-lg me-1"></i>Add User</button>';
+
+require __DIR__ . '/../partials/admin_top.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Users</title>
-  <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/Users.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
-</head>
-<body class="admin">
-  <div>
-    <div class="header" style="margin-left: 269px;">
-      <i class="fas fa-bars hamburger" onclick="toggleNavigation()" style="display: none;"></i>
-      <div class="picfetch">
-        <?php
-            require __DIR__ . '/../../connection.php';
 
-              $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $picture = $row["picture"];
-            } else {
-                $picture = "";
-            }
-                
-              $sql = "SELECT * FROM profiledata WHERE email = ?";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              $firstname = $row["firstname"];
-              $middlename = $row["middlename"];
-              $lastname = $row["lastname"];
-            } else {
-              $firstname = "";
-              $middlename = "";
-              $lastname = "";
-            }
-
-            $stmt->close();
-            $conn->close();
-          ?>
-
-          <img src="<?php echo $picture; ?>" width="80px" height="80px" onerror="this.style.display='none';">
-          <p class="p"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-      </div>
-      <div class="profile-icon" onclick="toggleProfileDetails()">
-          <i class="fas fa-user"></i>
-          <div class="profile-details-container" id="profileDetailsContainer">
-              <div class="profile">
-              <?php
-                require __DIR__ . '/../../connection.php';
-
-                $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $picture = $row["picture"];
-                } else {
-                    $picture = "";
-                }
-
-                $sql = "SELECT * FROM profiledata WHERE email = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $firstname = $row["firstname"];
-                    $middlename = $row["middlename"];
-                    $lastname = $row["lastname"];
-                } else {
-                    $firstname = "";
-                    $middlename = "";
-                    $lastname = "";
-                }
-
-                $sql = "SELECT * FROM users WHERE userName = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $userType = $row["userType"];
-                } else {
-                    $userType = "";
-                }
-
-                $stmt->close();
-                $conn->close();
-                ?>
-                <img src="<?php echo $picture; ?>" alt="Barangay Hall of Paule 1" width="80px" height="80px">
-                <div class="adminname">
-                  <p class="p1"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-                  <p class="p2"><?php echo $userType; ?></p>
-                </div>
-              </div>
-              <hr>
-              <a href="UserProfile.php"><i class="bi bi-person"></i> Profile</a>
-              <a href="ForgotPassword.php"><i class="bi bi-key"></i> Reset Password</a>
-              <hr>
-              <a href="#" onclick="confirmLogout()"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-          </div>
-      </div>
-    </div>
-    <div class="navigation" id="navigation">
-        <div class="logo">
-          <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Barangay Logo" height="40px" width="40px">
-          <p>Barangay Records</p>
+<div class="card">
+    <form class="table-toolbar" method="get">
+        <div class="field-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search name or username…">
         </div>
-        <div class="administrators">
-          <p><em> Administrator</em></p>
-        </div>
-        <a href="AdminDashboard.php" class="a1"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="BarangayOfficial.php" class="a1"><i class="fas fa-users"></i> Barangay Officials</a>
-        <a href="Blotter.php" class="a1"><i class="fas fa-book"></i> Blotter</a>
-        <a href="Resident.php" class="a1"><i class="fas fa-users"></i> Residents</a>
-        <a href="DocumentRequest.php" class="a1" id="requests"><i class="fas fa-file"></i> Document Requests</a>
-        <a href="Users.php" class="a1" id="user"><i class="fas fa-users-cog"></i> Users</a>
-        <a href="Activity.php" class="a1"><i class="bi bi-activity"></i> Activity</a>
-        <div class="dropdown" onclick="toggleDropdown()">
-          <button class="btn btn-primary plus-toggle" type="button" id="dropdownMenuButton" >
-            <i class="fas fa-cog"></i>Page <i class="bi bi-plus"></i>
-          </button>
-          <div class="dropdown-content" id="dropdownContent">
-            <a href="Information.php"><i class="fas fa-chevron-right"></i>Information</a>
-            <a href="Forms.php"><i class="fas fa-chevron-right"></i>Forms</a>
-            <a href="BarangayFAQ.php"><i class="fas fa-chevron-right"></i>FAQ</a>
-            <a href="BarangayContact&Message.php" class="contact1"><i class="fas fa-chevron-right"></i>Contact</a>
-          </div>
-        </div>            
-        <a href="#" onclick="confirmLogout()" class="a1"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-      </div>
-</div>
-
-  <div class="title-with-icon" style="margin-left: 269px; z-index: 100;">
-    <a href="AdminDashboard.php" title="Dashboard"><i class="bi bi-house"></i></a>
-    <p>Users</p>
-  </div>
-
-  <div class="overlay" id="overlay" onclick="hideUserForm()"></div>
-  
-  <?php
-    require __DIR__ . '/../../connection.php';
-
-    $sql = "SELECT COUNT(*) AS totalUsers FROM users";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $countUsers = $row['totalUsers'];
-    } else {
-        $countUsers = 0;
-    }
-
-    $conn->close();
-  ?>
-
-  <div class="users" id="barangayOfficialsDashboard">
-      <div class="title-with-icon1">
-          <i class="fas fa-chart-line"></i>
-          <h3>List Chart</h3>
-          <button type="button" class="btn btn-success" onclick="showUserForm()">Add User</button>
-      </div>
-      <hr>
-      <div class="heading-and-buttons">
-          <div class="show-entries">
-              <label for="entries">Show Entries: </label>
-              <input type="number" title="number" placeholder="0" value="<?php echo $countUsers; ?>">
-          </div>    
-          <div class="search-bar">
-              <p>Search: </p>
-              <input type="text" id="searchInput" onkeyup="searchUsers()" placeholder="Search for names..." style="padding-left: 10px;">
-          </div>
-      </div>
-      <hr>
-      <table class="table-no-border">
-          <thead>
-              <tr>
-                  <th style="width: 25%;">Full Name</th>
-                  <th>Email</th>
-                  <th>Password</th>
-                  <th>Type</th>
-                  <th>Action</th>
-              </tr>
-          </thead>
-          <tbody>
-              <?php
-              require __DIR__ . '/../../connection.php';
-
-              // Define pagination parameters
-              $limit = 5;
-              $currentPage = isset($_GET['page']) ? $_GET['page'] : 1;
-              $offset = ($currentPage - 1) * $limit;
-
-              // Get search term from URL
-              $searchInput = isset($_GET['search']) ? $_GET['search'] : '';
-
-              // Construct SQL query based on search term and pagination
-              $sql = "SELECT * FROM users WHERE fullName LIKE '%$searchInput%' LIMIT $limit OFFSET $offset";
-
-              $result = $conn->query($sql);
-
-              if ($result->num_rows > 0) {
-                  while ($row = $result->fetch_assoc()) {
-                      echo "<tr>";
-                      echo "<td style='display: none;'>" . $row['id'] . "</td>"; 
-                      echo "<td style='width: 25%;'>" . $row["fullName"] . "</td>";
-                      echo "<td>" . $row["userName"] . "</td>";
-                      echo "<td>";
-                      echo str_repeat("&#8226;", strlen($row["password"]));
-                      echo "</td>";
-                      echo "<td>" . $row["userType"] . "</td>";
-                      echo "<td class='action-buttons'>";
-                      echo "<a href='#' onclick='editUser(" . $row['id'] . ")' class='btn btn-primary btnedit' style='margin-right:5px;'>Edit</a>";
-                      echo "<button type='button' class='btn btn-danger' onclick='deleteUser(" . $row['id'] . ")'>Delete</button>";
-                      echo "</td>";
-                      echo "</tr>";
-                  }
-              } else {
-                  echo "<tr><td colspan='5'>No matching records found</td></tr>";
-              }
-
-              $conn->close();
-              ?>
-          </tbody>
-      </table>
-      <div class="navigation-buttons">
-          <p>Showing <?php echo $countUsers; ?> of <?php echo $limit; ?> entries.</p>
-          <?php
-          $totalPages = ceil($countUsers / $limit);
-          ?>
-          <a href="?page=<?php echo max(1, $currentPage - 1); ?>" class="btn <?php echo $currentPage == 1 ? 'btn-secondary disabled' : 'btn-primary'; ?>">Previous</a>
-          <a href="?page=<?php echo min($totalPages, $currentPage + 1); ?>" class="btn <?php echo $currentPage == $totalPages ? 'btn-secondary disabled' : 'btn-primary'; ?>">Next</a>
-      </div>
-  </div>
-
-  <footer class="footer" style="margin-top: 50px;">
-    <div class="container">
-        <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <div class="form-container" id="userContainer">
-      <div class="title">
-  <i class="fas fa-user-plus"></i><h2>Add User</h2>
-  <button type="button" class="btn-close" aria-label="Close" onclick="hideUserForm()"></button>
-  </div>
-  <form action="/BarangayManagementSystem-main/backend/actions/users_insert.php" method="POST">
-      <div class="row">
-          <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="fullName" class="lab">Full Name</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-person"></i></span>
-                      <input type="text" class="form-control" id="userFullName" name="userFullName" placeholder="Enter full name">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="contact" class="lab">Username</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-person"></i></span>
-                      <input type="email" class="form-control" id="userName" name="userName" placeholder="Enter username">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="address" class="lab"> Password</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                      <input type="text" class="form-control" id="password" name="password" placeholder="Enter password">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="usertype" class="lab">Type</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-building"></i></span>
-                      <select title="usertype" class="form-control" id="usertype" name="usertype">
-                        <option value="" disabled selected>Select User Type</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Resident">Resident</option>
-                    </select>        
-                    </div>
-                  </div>
-          </div>
-          <div class="form-group text-center">
-          <div class="col">
-            <button type="button" class="btn btn-secondary btn3" onclick="hideUserForm()"> Close</button>
-              <button type="submit" class="btn btn-primary btn4" id="add">Add</button>
-          </div>
-      </div>
-      </div>
+        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <span class="spacer"></span>
+        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
-  </div>
-  
-  <div class="form-container" id="edituserContainer" style=" width: 580px; height: 480px; ">
-  <div class="title">
-    <i class="fas fa-user-plus"></i><h2>Edit User</h2>
-    <button type="button" class="btn-close" aria-label="Close" onclick="hideEditUserForm()"></button>
-  </div>
-  <form action="/BarangayManagementSystem-main/backend/actions/user_update.php" method="POST">
-    <?php
-      require __DIR__ . '/../../connection.php';
 
-      function fetchUserData($conn, $userId) {
-          $userId = mysqli_real_escape_string($conn, $userId);
-          
-          $sql = "SELECT * FROM users WHERE id = '$userId'";
-          $result = $conn->query($sql);
-
-          if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              return $row;
-          } else {
-              return null;
-          }
-      }
-
-      if (isset($_GET['id'])) {
-          $userData = fetchUserData($conn, $_GET['id']);
-
-          if ($userData) {
-              $usersid = $userData["id"];
-              $usersfullname = $userData["fullName"];
-              $username = $userData["userName"];
-              $userspassword  = $userData["password"];
-              $users_type = $userData["userType"];
-          } else {
-              echo "User not found";
-          }
-      } else {
-          echo "User ID not provided";
-      }
-
-      $conn->close();
-    ?>
-    <input type="hidden" name="users_id" value="<?php echo $usersid; ?>">
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group" style="width: 250px;">
-          <label for="fullName" class="lab">Full Name</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person"></i></span>
-            <input type="text" class="form-control" id="userFullName" name="userFullName" placeholder="Enter full name" value="<?php echo $usersfullname; ?>">
-          </div>
-        </div>
-        <div class="form-group" style="width: 250px;">
-          <label for="contact" class="lab">Username</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person"></i></span>
-            <input type="text" class="form-control" id="userName" name="userName" placeholder="Enter username" value="<?php echo $username ?>">
-          </div>
-        </div>
-        <div class="form-group" style="width: 250px;">
-          <label for="address" class="lab">Password</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-            <input type="text" class="form-control" id="password" name="password" placeholder="Enter password" value="<?php echo $userspassword ?>">
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group" style="width: 250px;">
-          <label for="newpassword" class="lab">New Password</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-            <input type="text" class="form-control" id="newpassword" name="newpassword" placeholder="Enter new password">
-          </div>
-        </div>
-        <div class="form-group" style="width: 250px;">
-          <label for="confirmpassword" class="lab">Confirm Password</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-            <input type="text" class="form-control" id="confirmpassword" name="confirmpassword" placeholder="Confirm password">
-          </div>
-        </div>
-        <div class="form-group" style="width: 250px;">
-          <label for="usertype" class="lab">Type</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-building"></i></span>
-            <select title="usertype" class="form-control" id="usertype" name="usertype">
-              <option value="<?php echo $users_type; ?>" disabled selected><?php echo $users_type; ?></option>
-              <option value="Admin">Admin</option>
-              <option value="Resident">Resident</option>
-            </select>        
-          </div>
-        </div>
-      </div>
+    <div class="table-wrap">
+        <table class="data">
+            <thead><tr><th>Name</th><th>Username</th><th>Role</th><th class="col-actions">Actions</th></tr></thead>
+            <tbody>
+            <?php if (!$rows): ?>
+                <tr><td colspan="4"><div class="empty"><i class="bi bi-person-x"></i><h3>No users found</h3></div></td></tr>
+            <?php else: foreach ($rows as $r): $roleKey = strtolower((string) $r['userType']); ?>
+                <tr data-row='<?= e(json_encode($r, JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
+                    <td class="fw-semibold"><?= e($r['fullName']) ?></td>
+                    <td><?= e($r['userName']) ?></td>
+                    <td>
+                        <span class="pill <?= $roleKey === 'admin' ? 'pill--info' : 'pill--muted' ?>">
+                            <?= e($types[$roleKey] ?? ucfirst($roleKey ?: 'Staff')) ?>
+                        </span>
+                    </td>
+                    <td class="col-actions">
+                        <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editUser(this)"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
+                                onclick="deleteUser(<?= (int) $r['id'] ?>, '<?= e($r['fullName']) ?>')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+        </table>
     </div>
-    <div class="form-group text-center" style="width: 360px; background: #fff;">
-      <div class="col">
-        <button type="button" style="margin-left: 165px;" class="btn btn-secondary btn3" onclick="hideEditUserForm()"> Close</button>
-        <button type="submit" style="margin-left: 170px;" class="btn btn-primary btn4" id="update">Update</button>
-      </div>
+
+    <?php if ($pages > 1): ?>
+    <div class="card-ft pager">
+        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
+        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
+        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
     </div>
-  </form>
+    <?php endif; ?>
 </div>
 
-  <script>
-      document.addEventListener('DOMContentLoaded', function() {
-      var addBtn = document.getElementById('add');
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="userForm" method="POST" action="<?= action_url('users_insert.php') ?>">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalTitle">Add User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="users_id" id="uf_id">
+          <div class="mb-3">
+            <label class="form-label">Full name</label>
+            <input class="form-control" name="userFullName" id="uf_fullName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" name="userName" id="uf_userName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select class="form-select" name="usertype" id="uf_userType">
+              <?php foreach ($types as $k => $label): ?><option value="<?= $k ?>"><?= $label ?></option><?php endforeach; ?>
+            </select>
+          </div>
+          <div id="uf_addPw" class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" id="uf_password">
+          </div>
+          <div id="uf_editPw" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">New password <span class="text-caption">(leave blank to keep current)</span></label>
+              <input type="password" class="form-control" name="newpassword" id="uf_newpassword">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirm new password</label>
+              <input type="password" class="form-control" name="confirmpassword" id="uf_confirmpassword">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="userSubmit">Save user</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-      if (addBtn) {
-          addBtn.addEventListener('click', function() {
-          Swal.fire({
-            icon: 'success',
-            title: 'Official Added Successfully',
-            text: 'You have added the official successfully.',
-              timer: 12000,
-              showConfirmButton: false
-          }).then((result) => {
-              if (result.dismiss === Swal.DismissReason.timer) {
-                hideUserForm();
-              }
-          });
-          }, 3000);
-      }
-      });
+<?php
+$insertUrl = action_url('users_insert.php');
+$updateUrl = action_url('user_update.php');
+$deleteUrl = action_url('user_delete.php');
+$foot_extra = <<<HTML
+<script>
+const userModal = new bootstrap.Modal('#userModal');
+const uForm = document.getElementById('userForm');
 
-      function deleteUser(userId) {
-          Swal.fire({
-              title: 'Are you sure?',
-              text: 'Are you sure you want to delete this user?',
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonText: 'Yes, delete it!',
-              cancelButtonText: 'No, cancel!',
-              reverseButtons: true
-          }).then((result) => {
-              if (result.isConfirmed) {
-                  var xhttp = new XMLHttpRequest();
-                  xhttp.onreadystatechange = function () {
-                      if (this.readyState == 4 && this.status == 200) {
-                           Swal.fire({
-                            title: 'Deleted!',
-                            text: 'User has been deleted.',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Reload the page after successful deletion
-                                location.reload();
-                            }
-                        });
-                      }
-                  };
-                  xhttp.open("GET", "/BarangayManagementSystem-main/backend/actions/user_delete.php?id=" + userId, true);
-                  xhttp.send();
-              } else if (
-                  result.dismiss === Swal.DismissReason.cancel
-              ) {
-                  Swal.fire(
-                      'Cancelled',
-                      'Your user is safe',
-                      'error'
-                  )
-              }
-          });
-      }
-            
-      function editUser(userId) {
-          if (userId) {
-              var editUrl = 'Users.php?id=' + userId;
-
-              window.location.href = editUrl;
-          } else {
-              console.error("Invalid userId:", userId);
-          }
-      }
-
-      window.onload = function() {
-          var urlParams = new URLSearchParams(window.location.search);
-          var userId = urlParams.get('id');
-          
-          if (userId) {
-              var editUrl = 'Users.php?id=' + userId;
-              showEditUserForm(editUrl);
-          }
-      }
-
-      function showEditUserForm(editUrl) {
-          var overlay = document.getElementById('overlay');
-          var formContainer = document.getElementById('edituserContainer');
-          var blurredBackground = document.createElement('div'); 
-          blurredBackground.classList.add('blurred-background'); 
-
-          document.body.appendChild(blurredBackground);
-
-          overlay.style.display = 'block';
-          formContainer.style.display = 'block';
-      }
-
-      function hideEditUserForm() {
-          var overlay = document.getElementById('overlay');
-          var formContainer = document.getElementById('edituserContainer');
-          var blurredBackground = document.querySelector('.blurred-background'); 
-        
-          blurredBackground.parentNode.removeChild(blurredBackground);
-        
-          overlay.style.display = 'none';
-          formContainer.style.display = 'none';
-
-          window.location.href = 'Users.php';
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-      var updateBtn = document.getElementById('update');
-
-      if (updateBtn) {
-        updateBtn.addEventListener('click', function() {
-          Swal.fire({
-            icon: 'success',
-            title: 'Official Edit Successfully',
-            text: 'You have successfuly edit Official.',
-            timer: 12000,
-            showConfirmButton: false
-          }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.timer) {
-              hideEditUserForm();
-            }
-          });
-        }, 3000);
-      }
-    });
-
-      function searchUsers() {
-        var input = document.getElementById("searchInput").value.toLowerCase();
-        var tableRows = document.querySelectorAll("tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-        var cells = row.getElementsByTagName("td");
-        var found = false;
-
-        Array.from(cells).forEach(function(cell) {
-            var cellText = cell.innerText.toLowerCase();
-            if (cellText.includes(input)) {
-                found = true;
-            }
-        });
-
-        if (found) {
-            row.style.display = "";
-            filteredRows++;
-        } else {
-            row.style.display = "none";
-        }
-    });
+function openUser() {
+    uForm.reset(); uForm.action = '{$insertUrl}';
+    document.getElementById('uf_id').value = '';
+    document.getElementById('uf_addPw').classList.remove('d-none');
+    document.getElementById('uf_password').required = true;
+    document.getElementById('uf_editPw').classList.add('d-none');
+    document.getElementById('userModalTitle').textContent = 'Add User';
+    document.getElementById('userSubmit').textContent = 'Save user';
+    userModal.show();
+}
+function editUser(btn) {
+    const d = JSON.parse(btn.closest('tr').dataset.row);
+    uForm.reset(); uForm.action = '{$updateUrl}';
+    document.getElementById('uf_id').value = d.id;
+    document.getElementById('uf_fullName').value = d.fullName ?? '';
+    document.getElementById('uf_userName').value = d.userName ?? '';
+    document.getElementById('uf_userType').value = (d.userType || 'staff').toLowerCase();
+    document.getElementById('uf_addPw').classList.add('d-none');
+    document.getElementById('uf_password').required = false;
+    document.getElementById('uf_editPw').classList.remove('d-none');
+    document.getElementById('userModalTitle').textContent = 'Edit User';
+    document.getElementById('userSubmit').textContent = 'Update user';
+    userModal.show();
+}
+uForm.addEventListener('submit', function (e) {
+    const a = document.getElementById('uf_newpassword').value;
+    const b = document.getElementById('uf_confirmpassword').value;
+    if (!document.getElementById('uf_editPw').classList.contains('d-none') && a !== b) {
+        e.preventDefault();
+        Swal.fire({ icon: 'error', title: 'Passwords do not match' });
     }
-
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Are you sure you want to log out?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, log out',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = 'Users.php?logout=true';
-            }
-        });
-    }
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-euKpLsYQJz5jE0EEOxnTPI1a2ybp4QA9QfsB1LD73pI95/02djN3eVkD5bZlNumj" crossorigin="anonymous"></script>
-  <script src="/BarangayManagementSystem-main/frontend/assets/js/Admin.js"></script>
-</body>
-</html>
+});
+function deleteUser(id, name) {
+    Swal.fire({ icon:'warning', title:'Delete user?',
+        html:'Remove the account for <b>' + name + '</b>?',
+        showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#c0392b', reverseButtons:true
+    }).then(r => { if (r.isConfirmed) location.href = '{$deleteUrl}?id=' + id; });
+}
+</script>
+HTML;
+require __DIR__ . '/../partials/admin_bottom.php';

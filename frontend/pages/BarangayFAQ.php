@@ -1,553 +1,159 @@
 <?php
-  session_start();
+/**
+ * BarangayFAQ.php — manage the public FAQ (list + add + edit + delete).
+ * Add  -> backend/actions/faq1_insert.php   (question, answer, date)
+ * Edit -> backend/actions/faq1_update.php   (faq_id, question, answer, date)
+ * Delete -> backend/actions/faq1_delete.php (POST delete_id)
+ */
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();
 
-  if (!isset($_SESSION['username'])) {
-      header("Location: Login.php");
-      exit;
-  }
+$pdo = db();
 
-  if (isset($_GET['logout'])) {
-      session_destroy();
+$search  = trim($_GET['search'] ?? '');
+$perPage = 10;
+$page    = max(1, (int) ($_GET['page'] ?? 1));
+$offset  = ($page - 1) * $perPage;
+$like    = '%' . $search . '%';
 
-      header("Location: Login.php");
-      exit;
-  }
+$st = $pdo->prepare('SELECT COUNT(*) FROM faq WHERE question LIKE ? OR answer LIKE ?');
+$st->execute([$like, $like]);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+
+$st = $pdo->prepare('SELECT * FROM faq WHERE question LIKE ? OR answer LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?');
+$st->bindValue(1, $like); $st->bindValue(2, $like);
+$st->bindValue(3, $perPage, PDO::PARAM_INT);
+$st->bindValue(4, $offset, PDO::PARAM_INT);
+$st->execute();
+$rows = $st->fetchAll();
+
+$page_title    = 'FAQ';
+$page_heading  = 'Frequently Asked Questions';
+$page_subtitle = $total . ' published question' . ($total === 1 ? '' : 's');
+$active_nav    = 'faq';
+$page_actions  = '<button class="btn btn-primary" onclick="openFaq()"><i class="bi bi-plus-lg me-1"></i>Add FAQ</button>';
+
+require __DIR__ . '/../partials/admin_top.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FAQ</title>
-  <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/BarangayFAQ.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
-</head>
-<body class="admin">
-  <div>
-    <div class="header">
-      <i class="fas fa-bars hamburger" onclick="toggleNavigation()" style="display: none;"></i>
-      <div class="picfetch">
-        <?php
-            require __DIR__ . '/../../connection.php';
 
-              $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $picture = $row["picture"];
-            } else {
-                $picture = "";
-            }
-                
-              $sql = "SELECT * FROM profiledata WHERE email = ?";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              $firstname = $row["firstname"];
-              $middlename = $row["middlename"];
-              $lastname = $row["lastname"];
-            } else {
-              $firstname = "";
-              $middlename = "";
-              $lastname = "";
-            }
-
-            $stmt->close();
-            $conn->close();
-          ?>
-
-          <img src="<?php echo $picture; ?>" width="80px" height="80px" onerror="this.style.display='none';">
-          <p class="p"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-      </div>
-      <div class="profile-icon" onclick="toggleProfileDetails()">
-          <i class="fas fa-user"></i>
-          <div class="profile-details-container" id="profileDetailsContainer">
-              <div class="profile">
-              <?php
-                require __DIR__ . '/../../connection.php';
-
-                $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $picture = $row["picture"];
-                } else {
-                    $picture = "";
-                }
-
-                $sql = "SELECT * FROM profiledata WHERE email = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $firstname = $row["firstname"];
-                    $middlename = $row["middlename"];
-                    $lastname = $row["lastname"];
-                } else {
-                    $firstname = "";
-                    $middlename = "";
-                    $lastname = "";
-                }
-
-                $sql = "SELECT * FROM users WHERE userName = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $userType = $row["userType"];
-                } else {
-                    $userType = "";
-                }
-
-                $stmt->close();
-                $conn->close();
-                ?>
-                <img src="<?php echo $picture; ?>" alt="Barangay Hall of Paule 1" width="80px" height="80px">
-                <div class="adminname">
-                  <p class="p1"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-                  <p class="p2"><?php echo $userType; ?></p>
-                </div>
-              </div>
-              <hr>
-              <a href="Profile.php"><i class="bi bi-person"></i> Profile</a>
-              <a href="Password.php"><i class="bi bi-key"></i> Reset Password</a>
-              <hr>
-              <a href="#" onclick="confirmLogout()"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-          </div>
-      </div>
-    </div>
-    <div class="navigation" id="navigation">
-      <div class="logo">
-        <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Barangay Logo" height="40px" width="40px">
-        <p>Barangay Records</p>
-      </div>
-      <div class="administrators">
-        <p><em> Administrator</em></p>
-      </div>
-      <a href="AdminDashboard.php" class="a1"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      <a href="BarangayOfficial.php" class="a1"><i class="fas fa-users"></i> Barangay Officials</a>
-      <a href="Blotter.php" class="a1"><i class="fas fa-book"></i> Blotter</a>
-      <a href="DocumentRequest.php" class="a1" id="requests"><i class="fas fa-file"></i> Document Requests</a>
-      <a href="Resident.php" class="a1"><i class="fas fa-users"></i> Residents</a>
-      <a href="Users.php" class="a1"><i class="fas fa-users-cog"></i> Users</a>
-      <a href="Activity.php" class="a1"><i class="bi bi-activity"></i> Activity</a>
-      <div class="dropdown" onclick="toggleDropdown()">
-        <button class="btn btn-primary plus-toggle" type="button" id="dropdownMenuButton" >
-          <i class="fas fa-cog"></i>Page <i class="bi bi-plus"></i>
-        </button>
-        <div class="dropdown-content" id="dropdownContent">
-          <a href="Information.php"><i class="fas fa-chevron-right"></i>Information</a>
-          <a href="Forms.php"><i class="fas fa-chevron-right"></i>Forms</a>
-          <a href="BarangayFAQ.php" id="php"><i class="fas fa-chevron-right"></i>FAQ</a>
-          <a href="BarangayContact&Message.php" class="contact1"><i class="fas fa-chevron-right"></i>Contact</a>
+<div class="card">
+    <form class="table-toolbar" method="get">
+        <div class="field-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search questions…">
         </div>
-      </div>
-      <a href="#" onclick="confirmLogout()" class="a1"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-    </div>
-  </div>
-  
-  <div class="title-with-icon">
-    <a href="AdminDashboard.php" title="Dashboard"><i class="bi bi-house"></i></a>
-    <p>Frequently Asked Question</p>
-  </div>
-
-  <div class="overlay" id="overlay" onclick="hideForm()"></div>
-
-  <?php
-        require __DIR__ . '/../../connection.php';
-
-        $sql = "SELECT COUNT(*) AS totalfaq FROM faq";
-        $result = $conn->query($sql);
-
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $countfaq = $row['totalfaq'];
-        } else {
-            $countfaq = 0;
-        }
-
-        $conn->close();
-    ?>
-
-    <div class="activity" id="barangayOfficialsDashboard">
-        <div class="title-with-icon1">
-            <i class="fas fa-chart-line"></i>
-            <h3 style="margin-right: 1010px;">List Chart</h3>
-            <button type="button" class="btn btn-success" onclick="showActivityForm()">Add FAQ</button>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-            <div class="show-entries">
-                <label for="entries">Show Entries: </label>
-                <input type="number" title="number" placeholder="0" value="<?php echo $countfaq; ?>">
-            </div>    
-            <div class="search-bar">
-                <p>Search: </p>
-                <input type="text" id="searchInput" onkeyup="searchFAQ()" placeholder="Search for names..." style="padding-left: 10px;">
-            </div>
-        </div>
-        <hr>
-        <table class="table-no-border">
-            <thead>
-                <tr>
-                    <th>Number</th>
-                    <th>Date</th>
-                    <th>Question</th>
-                    <th>Answer</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                require __DIR__ . '/../../connection.php';
-
-                $limit = 5;
-                $currentPage = isset($_GET['page']) ? $_GET['page'] : 1;
-                $offset = ($currentPage - 1) * $limit;
-
-                $searchQuery = isset($_GET['search']) ? $_GET['search'] : '';
-
-                $sql = "SELECT * FROM faq WHERE question LIKE '%$searchQuery%' LIMIT $limit OFFSET $offset";
-
-                $result = $conn->query($sql);
-
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td style='width: 20%'>" . $row["id"] . "</td>";
-                        echo "<td>" . $row["date"] . "</td>";
-                        echo "<td style='width: 20%'>" . $row["question"] . "</td>";
-                        echo "<td style='width: 25%'>" . $row["answer"] . "</td>";
-                        echo "<td>";
-                        echo "<a href='#' onclick='editFAQ(" . $row['id'] . ")' class='btn btn-primary btnedit' style='margin-right:5px;'>Edit</a>";
-                        echo "<button class='btn btn-danger' onclick='deleteFAQ(" . ($row['id'] ?? '') . ")'>Delete</button>";
-                        echo "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='5'>No FAQs found.</td></tr>";
-                }
-
-                $conn->close();
-                ?>
-            </tbody>
-        </table>
-        <div class="navigation-buttons">
-            <p>Showing <?php echo $countfaq; ?> of <?php echo $limit; ?> entries.</p>
-            <a style="margin-right: 0px;" href="?page=<?php echo $currentPage > 1 ? $currentPage - 1 : 1; ?>" class="btn <?php echo $currentPage == 1 ? 'btn-secondary disabled' : 'btn-primary'; ?>">Previous</a>
-            <a href="?page=<?php echo $currentPage < ceil($countfaq / $limit) ? $currentPage + 1 : ceil($countfaq / $limit); ?>" class="btn <?php echo $currentPage == ceil($countfaq / $limit) ? 'btn-secondary disabled' : 'btn-primary'; ?>">Next</a>
-        </div>
-    </div>
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <div class="form-container" id="activityContainer">
-    <div class="heading-with-icon"></h2><i class="fas fa-question-circle"></i><h2>Add FAQ</h2>
-        <button type="button" class="btn-close" aria-label="Close" onclick="hideActivityForm()"></button>
-    </div>
-    <form action="/BarangayManagementSystem-main/backend/actions/faq1_insert.php" method="POST">
-        <div class="row">
-            <div class="col-md-6">
-                    <div class="form-group">
-                    <label for="fullName" class="lab">Question</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-pencil"></i></span>
-                        <input type="text" class="form-control" id="Question" name="Question" placeholder="Enter question">
-                    </div>
-                    </div>
-                    <div class="form-group">
-                    <label for="contact" class="lab">Answer</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-pencil"></i></span>
-                        <input type="text" class="form-control" id="StartofTerm" name="StartofTerm" placeholder="Enter answer">
-                    </div>
-                    </div>
-                    <div class="form-group">
-                    <label for="address" class="lab">Date</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                        <input type="date" class="form-control" id="date" name="date" placeholder="Enter date">
-                    </div>
-                    </div>
-            </div>
-            <div class="form-group text-center">
-            <div class="col">
-            <button type="button" class="btn btn-secondary btn3" onclick="hideActivityForm()">Close</button>
-            <button type="submit" class="btn btn-primary btn4" id="add"> Add</button>
-            </div>
-        </div>
-        </div>
+        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <span class="spacer"></span>
+        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
     </form>
-    </div>
 
-    <div class="form-container" id="editactivityContainer">
-        <div class="heading-with-icon">
-            <i class="fas fa-question-circle"></i>
-            <h2>Edit FAQ</h2>
-            <button type="button" class="btn-close" aria-label="Close" onclick="hideEditActivityForm()"></button>
+    <div class="card-bd">
+        <?php if (!$rows): ?>
+            <div class="empty"><i class="bi bi-question-circle"></i><h3>No FAQs yet</h3></div>
+        <?php else: ?>
+        <div class="divide-y">
+            <?php foreach ($rows as $r): ?>
+            <div class="py-3" data-row='<?= e(json_encode($r, JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                        <div class="fw-semibold mb-1"><i class="bi bi-patch-question me-1 text-primary"></i><?= e($r['question']) ?></div>
+                        <div class="text-muted-2 small"><?= nl2br(e($r['answer'])) ?></div>
+                        <div class="text-caption mt-1"><?= e($r['date'] ? date('M j, Y', strtotime((string) $r['date'])) : '') ?></div>
+                    </div>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editFaq(this)"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
+                                onclick="deleteFaq(<?= (int) $r['id'] ?>)"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
-        <form action="/BarangayManagementSystem-main/backend/actions/faq1_update.php" method="POST">
-            <?php
-            require __DIR__ . '/../../connection.php';
-            function fetchFaqData($conn, $faqId) {
-                $faqId = mysqli_real_escape_string($conn, $faqId);
-                $sql = "SELECT * FROM faq WHERE id = '$faqId'";
-                $result = $conn->query($sql);
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    return $row;
-                } else {
-                    return null;
-                }
-            }
-
-            if (isset($_GET['id'])) {
-                $faqData = fetchFaqData($conn, $_GET['id']);
-                if ($faqData) {
-                    $faqid = $faqData["id"];
-                    $faqdate = $faqData["date"];
-                    $faqquestion = $faqData["question"];
-                    $faqanswer = $faqData["answer"];
-                } else {
-                    echo "FAQ not found";
-                }
-            } else {
-                echo "FAQ ID not provided";
-            }
-            ?>
-            <input type="hidden" name="faq_id" value="<?php echo $faqid; ?>">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="fullName" class="lab">Question</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-pencil"></i></span>
-                            <input type="text" class="form-control" id="Question" name="question" placeholder="Enter question" value="<?php echo $faqquestion; ?>">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="contact" class="lab">Answer</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-pencil"></i></span>
-                            <input type="text" class="form-control" id="StartofTerm" name="answer" placeholder="Enter answer" value="<?php echo $faqanswer; ?>">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="address" class="lab">Date</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                            <input type="date" class="form-control" id="date" name="date" placeholder="Enter date" value="<?php echo $faqdate; ?>">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group text-center">
-                <div class="col">
-                    <button type="button" class="btn btn-secondary btn3" onclick="hideEditActivityForm()">Close</button>
-                    <button type="submit" class="btn btn-primary btn4" id="update">Update</button>
-                </div>
-            </div>
-        </form>
+        <?php endif; ?>
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var addBtn = document.getElementById('add');
+    <?php if ($pages > 1): ?>
+    <div class="card-ft pager">
+        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
+        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
+        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
+    </div>
+    <?php endif; ?>
+</div>
 
-        if (addBtn) {
-            addBtn.addEventListener('click', function() {
-            Swal.fire({
-            icon: 'success',
-            title: 'Official Added Successfully',
-            text: 'You have added the official successfully.',
-                timer: 12000,
-                showConfirmButton: false
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.timer) {
-                hideActivityForm();
-                }
-            });
-            }, 3000);
+<div class="modal fade" id="faqModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="faqForm" method="POST" action="<?= action_url('faq1_insert.php') ?>">
+        <div class="modal-header">
+          <h5 class="modal-title" id="faqModalTitle">Add FAQ</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="faq_id" id="ff_id">
+          <div class="mb-3">
+            <label class="form-label">Question</label>
+            <input class="form-control" name="question" id="ff_question" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Answer</label>
+            <textarea class="form-control" rows="4" name="answer" id="ff_answer" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="date" id="ff_date" value="<?= date('Y-m-d') ?>">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="faqSubmit">Save FAQ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<form id="faqDeleteForm" method="POST" action="<?= action_url('faq1_delete.php') ?>" class="d-none">
+    <input type="hidden" name="delete_id" id="faqDeleteId">
+</form>
+
+<?php
+$insertUrl = action_url('faq1_insert.php');
+$updateUrl = action_url('faq1_update.php');
+$foot_extra = <<<HTML
+<script>
+const faqModal = new bootstrap.Modal('#faqModal');
+const fForm = document.getElementById('faqForm');
+function openFaq() {
+    fForm.reset(); fForm.action = '{$insertUrl}';
+    document.getElementById('ff_id').value = '';
+    document.getElementById('ff_date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('faqModalTitle').textContent = 'Add FAQ';
+    document.getElementById('faqSubmit').textContent = 'Save FAQ';
+    faqModal.show();
+}
+function editFaq(btn) {
+    const d = JSON.parse(btn.closest('[data-row]').dataset.row);
+    fForm.reset(); fForm.action = '{$updateUrl}';
+    document.getElementById('ff_id').value = d.id;
+    document.getElementById('ff_question').value = d.question ?? '';
+    document.getElementById('ff_answer').value = d.answer ?? '';
+    document.getElementById('ff_date').value = d.date ?? '';
+    document.getElementById('faqModalTitle').textContent = 'Edit FAQ';
+    document.getElementById('faqSubmit').textContent = 'Update FAQ';
+    faqModal.show();
+}
+function deleteFaq(id) {
+    Swal.fire({ icon:'warning', title:'Delete this FAQ?',
+        showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#c0392b', reverseButtons:true
+    }).then(r => {
+        if (r.isConfirmed) {
+            document.getElementById('faqDeleteId').value = id;
+            document.getElementById('faqDeleteForm').submit();
         }
     });
-
-    function deleteFAQ(faqId) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Are you sure you want to delete this FAQ entry?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'No, cancel!',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var xhttp = new XMLHttpRequest();
-                xhttp.onreadystatechange = function () {
-                    if (this.readyState == 4 && this.status == 200) {
-                        Swal.fire({
-                        title: 'Deleted!',
-                        text: 'FAQ has been deleted.',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Reload the page after successful deletion
-                                location.reload();
-                            }
-                        });
-                    }
-                };
-                xhttp.open("POST", "/BarangayManagementSystem-main/backend/actions/faq1_delete.php", true);
-                xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xhttp.send("delete_id=" + faqId);
-            } else if (
-                result.dismiss === Swal.DismissReason.cancel
-            ) {
-                Swal.fire(
-                    'Cancelled',
-                    'Your FAQ entry is safe',
-                    'error'
-                )
-            }
-        });
-    }
-
-    function editFAQ(faqId) {
-        if (faqId) {
-            var editUrl = 'BarangayFAQ.php?id=' + faqId;
-            window.location.href = editUrl;
-        } else {
-            console.error("Invalid userId:", faqId);
-        }
-    }
-
-    window.onload = function() {
-        var urlParams = new URLSearchParams(window.location.search);
-        var faqId = urlParams.get('id'); 
-        
-        if (faqId) {
-            var editUrl = 'BarangayFAQ.php?id=' + faqId;
-            showEditActivityForm(editUrl);
-        }
-    }
-
-    function hideEditActivityForm() {
-    var overlay = document.getElementById('overlay');
-    var formContainer = document.getElementById('editactivityContainer');
-    var blurredBackground = document.querySelector('.blurred-background'); 
-
-    blurredBackground.parentNode.removeChild(blurredBackground);
-
-    overlay.style.display = 'none';
-    formContainer.style.display = 'none';
-
-    window.location.href = 'BarangayFAQ.php';
-    }
-
-    function showEditActivityForm(editUrl) {
-    var overlay = document.getElementById('overlay');
-    var formContainer = document.getElementById('editactivityContainer');
-    var blurredBackground = document.createElement('div'); 
-    blurredBackground.classList.add('blurred-background'); 
-
-    document.body.appendChild(blurredBackground);
-
-    overlay.style.display = 'block';
-    formContainer.style.display = 'block';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-    var updateBtn = document.getElementById('update');
-
-    if (updateBtn) {
-        updateBtn.addEventListener('click', function() {
-        Swal.fire({
-            icon: 'success',
-            title: 'Official Edit Successfully',
-            text: 'You have successfuly edit Official.',
-            timer: 12000,
-            showConfirmButton: false
-        }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.timer) {
-            hideEditActivityForm();
-            }
-        });
-        }, 3000);
-    }
-    });
-
-    function searchFAQ() {
-        var input = document.getElementById("searchInput").value.toLowerCase();
-        var tableRows = document.querySelectorAll("tbody tr"); 
-        var filteredRows = 0;
-
-        tableRows.forEach(function(row) {
-            var cells = row.getElementsByTagName("td");
-            var found = false;
-
-            Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Are you sure you want to log out?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, log out',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = 'BarangayFAQ.php?logout=true';
-            }
-        });
-    }
-
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-euKpLsYQJz5jE0EEOxnTPI1a2ybp4QA9QfsB1LD73pI95/02djN3eVkD5bZlNumj" crossorigin="anonymous"></script>
-    <script src="/BarangayManagementSystem-main/frontend/assets/js/Admin.js"></script>
-</body>
-</html>
+}
+</script>
+HTML;
+require __DIR__ . '/../partials/admin_bottom.php';

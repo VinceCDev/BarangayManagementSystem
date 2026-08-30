@@ -1,34 +1,33 @@
 <?php
-// Check if the request method is POST
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Include the database connection file
-    require __DIR__ . '/../../connection.php';
+/**
+ * faq1_insert.php — add a FAQ entry.
+ * Expects POST: question, answer, date. Redirects back to BarangayFAQ.php.
+ */
+declare(strict_types=1);
 
-    // Prepare an SQL statement to insert data into the faq table
-    $stmt = $conn->prepare("INSERT INTO faq (question, answer, date) VALUES (?, ?, ?)");
+require __DIR__ . '/../../connection.php';           // $conn, db()
+require __DIR__ . '/../../backend/helpers/auth.php';
+require_login();
 
-    // Bind parameters to the SQL statement
-    $stmt->bind_param("sss", $question, $answer, $date);
-
-    // Retrieve form data from POST request
-    $question = $_POST["Question"];
-    $answer = $_POST["StartofTerm"];
-    $date = $_POST["date"];
-
-    // Execute the prepared statement
-    if ($stmt->execute()) {
-        // If insertion is successful, redirect to BarangayFAQ.php
-        header("Location: /BarangayManagementSystem-main/frontend/pages/BarangayFAQ.php");
-        exit(); // Terminate script execution
-    } else {
-        // If an error occurs during execution, display error message
-        echo "Error: " . $stmt->error;
-    }
-
-    // Close the prepared statement
-    $stmt->close();
-    
-    // Close the database connection
-    $conn->close();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . PAGES_URL . '/BarangayFAQ.php');
+    exit;
 }
-?>
+
+$question = trim($_POST['question'] ?? $_POST['Question'] ?? '');
+$answer   = trim($_POST['answer'] ?? $_POST['StartofTerm'] ?? '');
+$date     = $_POST['date'] ?? date('Y-m-d');
+
+if ($question === '' || $answer === '') {
+    exit('Question and answer are required.');
+}
+
+try {
+    $stmt = db()->prepare('INSERT INTO faq (question, answer, date) VALUES (?, ?, ?)');
+    $stmt->execute([$question, $answer, $date]);
+    header('Location: ' . PAGES_URL . '/BarangayFAQ.php');
+    exit;
+} catch (Throwable $e) {
+    error_log('faq1_insert.php: ' . $e->getMessage());
+    exit('Could not save the FAQ. Please try again.');
+}

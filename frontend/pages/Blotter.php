@@ -1,683 +1,194 @@
 <?php
-  session_start();
+/**
+ * Blotter.php — incident / complaint blotter (list + add + edit + delete).
+ * Add  -> backend/actions/blotter_insert.php
+ * Edit -> backend/actions/blotter_update.php   (hidden blotter_id)
+ * Delete (AJAX GET) -> backend/actions/blotter_delete.php?id=
+ */
+require __DIR__ . '/../partials/bootstrap.php';
+require_admin();
 
-  if (!isset($_SESSION['username'])) {
-      header("Location: Login.php");
-      exit;
-  }
+$pdo = db();
 
-  if (isset($_GET['logout'])) {
-      session_destroy();
+$search  = trim($_GET['search'] ?? '');
+$perPage = 10;
+$page    = max(1, (int) ($_GET['page'] ?? 1));
+$offset  = ($page - 1) * $perPage;
+$like    = '%' . $search . '%';
 
-      header("Location: Login.php");
-      exit;
-  }
+$st = $pdo->prepare(
+    'SELECT COUNT(*) FROM blotterrecords WHERE complainant LIKE ? OR personToComplaint LIKE ? OR status LIKE ?'
+);
+$st->execute([$like, $like, $like]);
+$total = (int) $st->fetchColumn();
+$pages = max(1, (int) ceil($total / $perPage));
+
+$st = $pdo->prepare(
+    'SELECT * FROM blotterrecords
+      WHERE complainant LIKE ? OR personToComplaint LIKE ? OR status LIKE ?
+      ORDER BY id DESC LIMIT ? OFFSET ?'
+);
+$st->bindValue(1, $like); $st->bindValue(2, $like); $st->bindValue(3, $like);
+$st->bindValue(4, $perPage, PDO::PARAM_INT);
+$st->bindValue(5, $offset, PDO::PARAM_INT);
+$st->execute();
+$rows = $st->fetchAll();
+
+$statuses = ['Pending', 'Ongoing', 'Resolved', 'Settled', 'Dismissed'];
+
+function blotter_pill(string $s): string
+{
+    $k = strtolower($s);
+    $cls = match (true) {
+        str_contains($k, 'resolve'), str_contains($k, 'settle') => 'pill--success',
+        str_contains($k, 'ongoing'), str_contains($k, 'progress') => 'pill--info',
+        str_contains($k, 'dismiss') => 'pill--muted',
+        default => 'pill--warning',
+    };
+    return '<span class="pill ' . $cls . '">' . e($s ?: 'Pending') . '</span>';
+}
+
+$page_title    = 'Blotter';
+$page_heading  = 'Blotter Records';
+$page_subtitle = $total . ' record' . ($total === 1 ? '' : 's');
+$active_nav    = 'blotter';
+$page_actions  = '<button class="btn btn-primary" onclick="openBlotter()"><i class="bi bi-plus-lg me-1"></i>New Record</button>';
+
+require __DIR__ . '/../partials/admin_top.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blotter</title>
-  <link rel="icon" href="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/Blotter.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
-  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
-</head>
-<body class="admin">
-    <div>
-        <div class="header" style="margin-left: 269px;">
-          <i class="fas fa-bars hamburger" onclick="toggleNavigation()" style="display: none;"></i>
-          <div class="picfetch">
-        <?php
-            require __DIR__ . '/../../connection.php';
 
-              $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $picture = $row["picture"];
-            } else {
-                $picture = "";
-            }
-                
-              $sql = "SELECT * FROM profiledata WHERE email = ?";
-              $stmt = $conn->prepare($sql);
-              $stmt->bind_param("s", $_SESSION['username']);
-              $stmt->execute();
-              $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              $firstname = $row["firstname"];
-              $middlename = $row["middlename"];
-              $lastname = $row["lastname"];
-            } else {
-              $firstname = "";
-              $middlename = "";
-              $lastname = "";
-            }
-
-            $stmt->close();
-            $conn->close();
-          ?>
-
-          <img src="<?php echo $picture; ?>" width="80px" height="80px" onerror="this.style.display='none';">
-          <p class="p"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-      </div>
-          <div class="profile-icon" onclick="toggleProfileDetails()">
-              <i class="fas fa-user"></i>
-              <div class="profile-details-container" id="profileDetailsContainer">
-                  <div class="profile">
-                  <?php
-                require __DIR__ . '/../../connection.php';
-
-                $sql = "SELECT * FROM proof_of_identity WHERE id = (SELECT id FROM profiledata WHERE email = ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $picture = $row["picture"];
-                } else {
-                    $picture = "";
-                }
-
-                $sql = "SELECT * FROM profiledata WHERE email = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $firstname = $row["firstname"];
-                    $middlename = $row["middlename"];
-                    $lastname = $row["lastname"];
-                } else {
-                    $firstname = "";
-                    $middlename = "";
-                    $lastname = "";
-                }
-
-                $sql = "SELECT * FROM users WHERE userName = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $_SESSION['username']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $userType = $row["userType"];
-                } else {
-                    $userType = "";
-                }
-
-                $stmt->close();
-                $conn->close();
-                ?>
-                <img src="<?php echo $picture; ?>" alt="Barangay Hall of Paule 1" width="80px" height="80px">
-                <div class="adminname">
-                  <p class="p1"><?php echo $firstname . " " . $middlename . " " . $lastname; ?></p>
-                  <p class="p2"><?php echo $userType; ?></p>
-                </div>
-              </div>
-                  <hr>
-                  <a href="UserProfile.php"><i class="bi bi-person"></i> Profile</a>
-                  <a href="ForgotPassword.php"><i class="bi bi-key"></i> Reset Password</a>
-                  <hr>
-                  <a href="#" onclick="confirmLogout()"><i class="bi bi-box-arrow-right"></i> Log Out</a>
-              </div>
-          </div>
+<div class="card">
+    <form class="table-toolbar" method="get">
+        <div class="field-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
+                   placeholder="Search complainant, respondent, status…">
         </div>
-        <div class="navigation" id="navigation">
-            <div class="logo">
-              <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Barangay Logo" height="40px" width="40px">
-              <p>Barangay Records</p>
-            </div>
-            <div class="administrators">
-              <p><em> Administrator</em></p>
-            </div>
-            <a href="AdminDashboard.php" class="a1"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="BarangayOfficial.php" class="a1"><i class="fas fa-users"></i> Barangay Officials</a>
-            <a href="Blotter.php" class="a1" id="blo"><i class="fas fa-book"></i> Blotter</a>
-            <a href="Resident.php" class="a1"><i class="fas fa-users"></i> Residents</a>
-            <a href="DocumentRequest.php" class="a1" id="requests"><i class="fas fa-file"></i> Document Requests</a>
-            <a href="Users.php" class="a1"><i class="fas fa-users-cog"></i> Users</a>
-            <a href="Activity.php" class="a1"><i class="bi bi-activity"></i> Activity</a>
-            <div class="dropdown" onclick="toggleDropdown()">
-              <button class="btn btn-primary plus-toggle" type="button" id="dropdownMenuButton" >
-                <i class="fas fa-cog"></i>Page <i class="bi bi-plus"></i>
-              </button>
-              <div class="dropdown-content" id="dropdownContent">
-                <a href="Information.php"><i class="fas fa-chevron-right"></i>Information</a>
-                <a href="Forms.php"><i class="fas fa-chevron-right"></i>Forms</a>
-                <a href="BarangayFAQ.php"><i class="fas fa-chevron-right"></i>FAQ</a>
-                <a href="BarangayContact&Message.php" class="contact1" id="cont"><i class="fas fa-chevron-right"></i>Contact</a>
-              </div>
-            </div>
-            <a href="#" onclick="confirmLogout()" class="a1"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-          </div>
-    </div>
-    
-    <div class="title-with-icon" style="margin-left: 269px;">
-        <a href="AdminDashboard.php" title="Dashboard"><i class="bi bi-house"></i></a>
-        <p>Blotter Records</p>
-    </div>
+        <?php if ($search): ?><a class="btn btn-outline-secondary" href="?">Clear</a><?php endif; ?>
+        <span class="spacer"></span>
+        <span class="text-caption"><?= $total ?> result<?= $total === 1 ? '' : 's' ?></span>
+    </form>
 
-    <div class="overlay" id="overlay" onclick="hideBlotterForm()"></div>
-    
-    <?php
-        require __DIR__ . '/../../connection.php';
-
-        $sql = "SELECT COUNT(*) AS totalBlotter FROM blotterrecords";
-        $result = $conn->query($sql);
-
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $countBlotter = $row['totalBlotter'];
-        } else {
-            $countBlotter = 0;
-        }
-
-        $conn->close();
-    ?>
-
-    <div class="blotter" id="barangayOfficialsDashboard">
-        <div class="title-with-icon1">
-            <i class="fas fa-chart-line"></i>
-            <h3 style="margin-right: 1005px;">List Chart</h3>
-            <button type="button" class="btn btn-success" onclick="showBlotterForm()">Add Blotter</button>
-        </div>
-        <hr>
-        <div class="heading-and-buttons">
-            <div class="show-entries">
-                <label for="entries">Show Entries: </label>
-                <input type="number" title="number" placeholder="0" value="<?php echo $countBlotter; ?>">
-            </div>    
-            <div class="search-bar">
-                <p>Search: </p>
-                <input type="text" id="searchInput" onkeyup="searchBlotter()" placeholder="Search for names..." style="padding-left: 10px;">
-            </div>
-        </div>
-        <hr>
-        <table class="table-no-border">
+    <div class="table-wrap">
+        <table class="data">
             <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>Complainant</th> 
-                    <th>Age</th>
-                    <th>Contact</th>
-                    <th>Person to Complaint</th>
-                    <th>Age</th>
-                    <th>Contact</th>
-                    <th>Action Taken</th>
-                    <th>Action</th>
-                </tr>
+                <tr><th>Status</th><th>Complainant</th><th>Respondent</th><th>Action taken</th><th class="col-actions">Actions</th></tr>
             </thead>
             <tbody>
-                <?php
-                require __DIR__ . '/../../connection.php';
-
-                $limit = 5;
-                $currentPage = isset($_GET['page']) ? $_GET['page'] : 1;
-                $offset = ($currentPage - 1) * $limit;
-
-                $searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
-
-                $sql = "SELECT * FROM blotterrecords WHERE 
-                            status LIKE '%$searchTerm%' OR 
-                            complainant LIKE '%$searchTerm%' OR 
-                            personToComplaint LIKE '%$searchTerm%' OR 
-                            actionTaken LIKE '%$searchTerm%'
-                        LIMIT $limit OFFSET $offset";
-
-                $result = $conn->query($sql);
-
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>" . $row["status"] . "</td>";
-                        echo "<td>" . $row["complainant"] . "</td>";
-                        echo "<td>" . $row["age1"] . "</td>";
-                        echo "<td>" . $row["contact1"] . "</td>";
-                        echo "<td>" . $row["personToComplaint"] . "</td>";
-                        echo "<td>" . $row["age2"] . "</td>";
-                        echo "<td>" . $row["contact2"] . "</td>";
-                        echo "<td>" . $row["actionTaken"] . "</td>";
-                        echo "<td class='action-buttons'>";
-                        echo "<a href='#' onclick='editBlotter(" . $row['id'] . ")' class='btn btn-primary btnedit' style='margin-right:5px;'>Edit</a>";
-                        echo "<button type='button' class='btn btn-danger' onclick='deleteBlotter(".$row['id'].")'>Delete</button>";
-                        echo "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='9'>No Data Available</td></tr>";
-                }
-
-                $conn->close();
-                ?>
+            <?php if (!$rows): ?>
+                <tr><td colspan="5"><div class="empty">
+                    <i class="bi bi-journal-x"></i><h3>No blotter records</h3>
+                    <p><?= $search ? 'Try a different search.' : 'File the first record with “New Record”.' ?></p>
+                </div></td></tr>
+            <?php else: foreach ($rows as $r): ?>
+                <tr data-row='<?= e(json_encode($r, JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
+                    <td><?= blotter_pill((string) $r['status']) ?></td>
+                    <td>
+                        <div class="fw-semibold"><?= e($r['complainant']) ?></div>
+                        <div class="text-caption"><?= e($r['address1'] ?: '—') ?></div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold"><?= e($r['personToComplaint'] ?: '—') ?></div>
+                        <div class="text-caption"><?= e($r['address2'] ?: '') ?></div>
+                    </td>
+                    <td class="text-truncate" style="max-width:22rem"><?= e($r['actionTaken'] ?: '—') ?></td>
+                    <td class="col-actions">
+                        <button class="btn btn-sm btn-light btn-icon" title="Edit" onclick="editBlotter(this)"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-light btn-icon text-danger" title="Delete"
+                                onclick="deleteBlotter(<?= (int) $r['id'] ?>, '<?= e($r['complainant']) ?>')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            <?php endforeach; endif; ?>
             </tbody>
         </table>
-        <div class="navigation-buttons">
-            <p>Showing <?php echo $countBlotter; ?> of <?php echo $limit; ?> entries.</p>
-            <a href="?page=<?php echo $currentPage > 1 ? $currentPage - 1 : 1; ?>" class="btn <?php echo $currentPage == 1 ? 'btn-secondary disabled' : 'btn-primary'; ?>">Previous</a>
-            <a href="?page=<?php echo $currentPage < ceil($countBlotter / $limit) ? $currentPage + 1 : ceil($countBlotter / $limit); ?>" class="btn <?php echo $currentPage == ceil($countBlotter / $limit) ? 'btn-secondary disabled' : 'btn-primary'; ?>">Next</a>
-        </div>
     </div>
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Barangay Paule 1. All rights reserved.</p>
-        </div>
-    </footer>
 
-    <div class="form-container" id="blotterFormContainer">
-        <div class="heading-with-icon">
-            <i class="fas fa-balance-scale"></i><h3>Add Blotter</h3>
-            <button type="button" class="btn-close" aria-label="Close" onclick="hideBlotterForm()"></button>
-        </div>
-    <form action="/BarangayManagementSystem-main/backend/actions/blotter_insert.php" method="POST">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="status"> Status</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-                        <select class="form-control" id="status" name="status">
-                            <option value="" disabled selected>Select Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Not Active">Not Active</option>
-                            <option value="Dismissed">Dismissed</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="complainant">Complainant</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="complainant" name="complainant" placeholder="Enter complainant">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="age1">Age</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="number" class="form-control" id="age1" name="age1" placeholder="Enter age">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="address1">Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                        <input type="text" class="form-control" id="address1" name="address1" placeholder="Enter address">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="contact1"> Contact</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                        <input type="tel" class="form-control" id="contact1" name="contact1" placeholder="Enter contact">
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="personToComplaint"> Person to Complaint</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="personToComplaint" name="personToComplaint" placeholder="Enter person to complaint">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="age2">Age</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="number" class="form-control" id="age2" name="age2" placeholder="Enter age">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="address2"> Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                        <input type="text" class="form-control" id="address2" name="address2" placeholder="Enter address">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="contact2">Contact</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                        <input type="tel" class="form-control" id="contact2" name="contact2" placeholder="Enter contact">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="actionTaken">Action Taken:</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-pencil"></i> </span>
-                        <input type="text" class="form-control" id="actionTaken" name="actionTaken" placeholder="Enter action taken">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="form-group text-center">
-            <div class="col">
-                <button type="button" class="btn btn-secondary btn3" onclick="hideBlotterForm()">Close</button>
-                <button type="submit" class="btn btn-primary btn4" id="add">Add</button>
-            </div>
-        </div>
-    </form>
+    <?php if ($pages > 1): ?>
+    <div class="card-ft pager">
+        <span class="pager__info">Page <?= $page ?> of <?= $pages ?> · <?= $total ?> total</span>
+        <a class="btn btn-sm btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page - 1]) ?>">Previous</a>
+        <a class="btn btn-sm btn-outline-secondary <?= $page >= $pages ? 'disabled' : '' ?>" href="?<?= http_build_query(['search' => $search, 'page' => $page + 1]) ?>">Next</a>
     </div>
-    
-    <?php
-        require __DIR__ . '/../../connection.php';
+    <?php endif; ?>
+</div>
 
-        function fetchBlotterData($conn, $blotterId) {
-            $blotterId = mysqli_real_escape_string($conn, $blotterId);
-            
-            $sql = "SELECT * FROM blotterrecords WHERE id = '$blotterId'";
-            $result = $conn->query($sql);
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                return $row;
-            } else {
-                return null;
-            }
-        }
-
-        if (isset($_GET['id'])) {
-            $blotterData = fetchBlotterData($conn, $_GET['id']);
-
-            if ($blotterData) {
-                $blotterid = $blotterData["id"];
-                $blotterstatus = $blotterData["status"];
-                $blottercomplainant = $blotterData["complainant"];
-                $blotterage1 = $blotterData["age1"];
-                $blotteraddress1  = $blotterData["address1"];
-                $blottercontact1 = $blotterData["contact1"];
-                $blotterpersonToComplaint = $blotterData["personToComplaint"];
-                $blotterage2 = $blotterData["age2"];
-                $blotteraddress2 = $blotterData["address2"];
-                $blottercontact2  = $blotterData["contact2"];
-                $blotteractionTaken = $blotterData["actionTaken"];
-            } else {
-                echo "Blotter not found";
-            }
-        } else {
-            echo "Blotter ID not provided";
-        }
-    ?>
-
-    <div class="form-container" id="editblotterFormContainer">
-        <div class="heading-with-icon">
-            <i class="fas fa-balance-scale"></i><h3>Edit Blotter</h3>
-            <button type="button" class="btn-close" aria-label="Close" onclick="hideEditBlotterForm()"></button>
+<div class="modal fade" id="blotterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form id="blotterForm" method="POST" action="<?= action_url('blotter_insert.php') ?>">
+        <div class="modal-header">
+          <h5 class="modal-title" id="blotterModalTitle">New Blotter Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form action="/BarangayManagementSystem-main/backend/actions/blotter_update.php" method="POST">
-        <input type="hidden" name="blotter_id" value="<?php echo $blotterid; ?>">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="status"> Status</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-                        <select class="form-control" id="status" name="status">
-                            <option value="" disabled selected><?php echo $blotterstatus; ?></option>
-                            <option value="Active">Active</option>
-                            <option value="Not Active">Not Active</option>
-                            <option value="Dismissed">Dismissed</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="complainant">Complainant</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="complainant" name="complainant" placeholder="Enter complainant" value="<?php echo $blottercomplainant; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="age1">Age</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="number" class="form-control" id="age1" name="age1" placeholder="Enter age" value="<?php echo $blotterage1; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="address1">Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                        <input type="text" class="form-control" id="address1" name="address1" placeholder="Enter address" value="<?php echo $blotteraddress1; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="contact1"> Contact</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                        <input type="tel" class="form-control" id="contact1" name="contact1" placeholder="Enter contact" value="<?php echo $blottercontact1; ?>">
-                    </div>
-                </div>
+        <div class="modal-body">
+          <input type="hidden" name="blotter_id" id="bf_id">
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status" id="bf_status">
+              <?php foreach ($statuses as $s): ?><option><?= $s ?></option><?php endforeach; ?>
+            </select>
+          </div>
+          <div class="row g-3">
+            <div class="col-12"><h6 class="text-muted-2 mb-0 mt-2">Complainant</h6></div>
+            <div class="col-md-6"><label class="form-label">Full name</label><input class="form-control" name="complainant" id="bf_complainant" required></div>
+            <div class="col-md-2"><label class="form-label">Age</label><input type="number" min="0" class="form-control" name="age1" id="bf_age1"></div>
+            <div class="col-md-4"><label class="form-label">Contact</label><input class="form-control" name="contact1" id="bf_contact1"></div>
+            <div class="col-12"><label class="form-label">Address</label><input class="form-control" name="address1" id="bf_address1"></div>
+
+            <div class="col-12"><h6 class="text-muted-2 mb-0 mt-2">Respondent</h6></div>
+            <div class="col-md-6"><label class="form-label">Full name</label><input class="form-control" name="personToComplaint" id="bf_personToComplaint"></div>
+            <div class="col-md-2"><label class="form-label">Age</label><input type="number" min="0" class="form-control" name="age2" id="bf_age2"></div>
+            <div class="col-md-4"><label class="form-label">Contact</label><input class="form-control" name="contact2" id="bf_contact2"></div>
+            <div class="col-12"><label class="form-label">Address</label><input class="form-control" name="address2" id="bf_address2"></div>
+
+            <div class="col-12">
+              <label class="form-label">Action taken</label>
+              <textarea class="form-control" rows="3" name="actionTaken" id="bf_actionTaken"></textarea>
             </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="personToComplaint"> Person to Complaint</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="personToComplaint" name="personToComplaint" placeholder="Enter person to complaint" value="<?php echo $blotterpersonToComplaint; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="age2">Age</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="number" class="form-control" id="age2" name="age2" placeholder="Enter age" value="<?php echo $blotterage2; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="address2"> Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                        <input type="text" class="form-control" id="address2" name="address2" placeholder="Enter address" value="<?php echo $blotterage2; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="contact2">Contact</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                        <input type="tel" class="form-control" id="contact2" name="contact2" placeholder="Enter contact" value="<?php echo $blottercontact2; ?>">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="actionTaken">Action Taken:</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-pencil"></i> </span>
-                        <input type="text" class="form-control" id="actionTaken" name="actionTaken" placeholder="Enter action taken" value="<?php echo $blotteractionTaken; ?>">
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-        <div class="form-group text-center">
-            <div class="col">
-                <button type="button" class="btn btn-secondary btn3" onclick="hideEditBlotterForm()">Close</button>
-                <button type="submit" class="btn btn-primary btn4" id="update">Update</button>
-            </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="blotterSubmit">Save record</button>
         </div>
-    </form>
+      </form>
     </div>
-    
-    <script>
+  </div>
+</div>
 
-    document.addEventListener('DOMContentLoaded', function() {
-    var addBtn = document.getElementById('add');
+<?php
+$insertUrl = action_url('blotter_insert.php');
+$updateUrl = action_url('blotter_update.php');
+$deleteUrl = action_url('blotter_delete.php');
+$foot_extra = <<<HTML
+<script>
+const blotterModal = new bootstrap.Modal('#blotterModal');
+const bForm = document.getElementById('blotterForm');
+const bFields = ['status','complainant','age1','contact1','address1',
+                 'personToComplaint','age2','contact2','address2','actionTaken'];
 
-    if (addBtn) {
-        addBtn.addEventListener('click', function() {
-        Swal.fire({
-            icon: 'success',
-            title: 'Blotter Added Successfully',
-            text: 'You have added the blotter successfully.',
-            timer: 12000,
-            showConfirmButton: false
-        }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.timer) {
-                hideBlotterForm();
-            }
-        });
-        }, 3000);
-    }
-    });
-
-    function deleteBlotter(blotterId) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: 'You will not be able to recover this blotter!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!',
-        reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var xhttp = new XMLHttpRequest();
-                xhttp.onreadystatechange = function() {
-                    if (this.readyState == 4 && this.status == 200) {
-                        Swal.fire(
-                            'Deleted!',
-                            'Your blotter has been deleted.',
-                            'success'
-                        ).then(() => {
-                            window.location.reload();
-                        });
-                    }
-                };
-                xhttp.open("GET", "/BarangayManagementSystem-main/backend/actions/blotter_delete.php?id=" + blotterId, true);
-                xhttp.send();
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                Swal.fire(
-                    'Cancelled',
-                    'Your blotter is safe',
-                    'error'
-                );
-            }
-        });
-    }
-
-        function editBlotter(blotterId) {
-            if (blotterId) {
-                var editUrl = 'Blotter.php?id=' + blotterId;
-                window.location.href = editUrl;
-            } else {
-                console.error("Invalid userId:", blotterId);
-            }
-        }
-
-        window.onload = function() {
-            var urlParams = new URLSearchParams(window.location.search);
-            var blotterId = urlParams.get('id'); 
-            
-            if (blotterId) {
-                var editUrl = 'Blotter.php?id=' + blotterId;
-                showEditBlotterForm(editUrl);
-            }
-        }
-        
-        function showEditBlotterForm(editUrl) {
-          var overlay = document.getElementById('overlay');
-          var formContainer = document.getElementById('editblotterFormContainer');
-          var blurredBackground = document.createElement('div'); 
-          blurredBackground.classList.add('blurred-background'); 
-        
-          document.body.appendChild(blurredBackground);
-        
-          overlay.style.display = 'block';
-          formContainer.style.display = 'block';
-        }
-        
-        function hideEditBlotterForm() {
-          var overlay = document.getElementById('overlay');
-          var formContainer = document.getElementById('editblotterFormContainer');
-          var blurredBackground = document.querySelector('.blurred-background'); 
-        
-          blurredBackground.parentNode.removeChild(blurredBackground);
-        
-          overlay.style.display = 'none';
-          formContainer.style.display = 'none';
-
-          window.location.href = 'Blotter.php';
-        }
-
-    document.addEventListener('DOMContentLoaded', function() {
-    var updateBtn = document.getElementById('update');
-
-    if (updateBtn) {
-        updateBtn.addEventListener('click', function() {
-        Swal.fire({
-            icon: 'success',
-            title: 'Blotter Edit Successfully',
-            text: 'You have successfuly edit blotter.',
-            timer: 12000,
-            showConfirmButton: false
-        }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.timer) {
-                hideEditBlotterForm();
-            }
-        });
-        }, 3000);
-    }
-    });
-
-    function searchBlotter() {
-    var input = document.getElementById("searchInput").value.toLowerCase();
-    var tableRows = document.querySelectorAll("tbody tr"); 
-    var filteredRows = 0;
-
-    tableRows.forEach(function(row) {
-        var cells = row.getElementsByTagName("td");
-        var found = false;
-
-        Array.from(cells).forEach(function(cell) {
-                var cellText = cell.innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    found = true;
-                }
-            });
-
-            if (found) {
-                row.style.display = "";
-                filteredRows++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Are you sure you want to log out?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, log out',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = 'Blotter.php?logout=true';
-            }
-        });
-    }
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-euKpLsYQJz5jE0EEOxnTPI1a2ybp4QA9QfsB1LD73pI95/02djN3eVkD5bZlNumj" crossorigin="anonymous"></script>
-    <script src="/BarangayManagementSystem-main/frontend/assets/js/Admin.js"></script>
-</body>
-</html>
+function openBlotter() {
+    bForm.reset(); bForm.action = '{$insertUrl}';
+    document.getElementById('bf_id').value = '';
+    document.getElementById('blotterModalTitle').textContent = 'New Blotter Record';
+    document.getElementById('blotterSubmit').textContent = 'Save record';
+    blotterModal.show();
+}
+function editBlotter(btn) {
+    const d = JSON.parse(btn.closest('tr').dataset.row);
+    bForm.reset(); bForm.action = '{$updateUrl}';
+    document.getElementById('bf_id').value = d.id;
+    bFields.forEach(f => { const el = document.getElementById('bf_' + f); if (el) el.value = d[f] ?? ''; });
+    document.getElementById('blotterModalTitle').textContent = 'Edit Blotter Record';
+    document.getElementById('blotterSubmit').textContent = 'Update record';
+    blotterModal.show();
+}
+function deleteBlotter(id, name) {
+    Swal.fire({ icon:'warning', title:'Delete record?',
+        html:'Remove the blotter record for <b>' + name + '</b>?',
+        showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#c0392b', reverseButtons:true
+    }).then(r => { if (r.isConfirmed) location.href = '{$deleteUrl}?id=' + id; });
+}
+</script>
+HTML;
+require __DIR__ . '/../partials/admin_bottom.php';
