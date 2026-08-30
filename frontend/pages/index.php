@@ -11,8 +11,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/index.css">
+  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/public-theme.css">
 </head> 
-<body>
+<body class="public">
     <header class="header"> 
         <a href="#" class="logo"> 
             <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Error Image" height="60px" width="60px"/>

@@ -32,8 +32,9 @@ if (isset($_GET['logout'])) {
             border-radius: 8px;
         }
     </style>
+  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
 </head>
-<body>
+<body class="admin">
     <div>
         <div class="header">
             <i class="fas fa-bars hamburger" onclick="toggleNavigation()" style="display: none;"></i>

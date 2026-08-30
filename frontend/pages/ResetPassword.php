@@ -74,6 +74,7 @@
     }
 }
     </style>
+  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css">
 </head>
 <body>
     <?php

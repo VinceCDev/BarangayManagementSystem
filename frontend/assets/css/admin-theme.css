@@ -1,0 +1,362 @@
+/* ==========================================================================
+   admin-theme.css — layout fixes for the admin shell (sidebar + topbar)
+   --------------------------------------------------------------------------
+   Loaded only on pages that carry <body class="admin">, AFTER theme.css and
+   the page's own stylesheet.
+
+   Fixes the "di pantay / di proportion" issues in the original CSS:
+     - sidebar was 250px wide but content was pushed 285px (CSS) and 288px
+       (inline style) -> permanent uneven gutter. Now one token: --sidebar-w.
+     - dashboard stat boxes were fixed at 396px and float/inline-block, so
+       they wrapped unevenly. Now an equal-width responsive CSS grid.
+     - main panels used width:81% with a different left margin, so no two
+       content columns lined up. Now they all share the same left edge/width.
+     - absurd magic margins (margin-right:883px, -35px, etc.) neutralised.
+   ========================================================================== */
+
+/* ---- Sidebar ---------------------------------------------------------- */
+body.admin .navigation {
+    width: var(--sidebar-w);
+    background: #16202e;                 /* was #333 — matches --ink family */
+    padding-top: var(--space-4);
+}
+body.admin .navigation .logo {
+    padding: var(--space-3) var(--space-4) var(--space-5);
+}
+body.admin .navigation a {
+    padding: 12px var(--space-4);
+    gap: var(--space-3);
+    border-radius: 0;
+    font-size: var(--fs-sm);
+}
+body.admin .navigation a i { margin: 0; font-size: 18px; }
+body.admin .navigation a:hover,
+body.admin .navigation a.active {
+    background: rgba(255, 255, 255, .08);
+    box-shadow: inset 3px 0 0 var(--brand);
+}
+body.admin .navigation.active { width: 0; overflow: hidden; }
+
+/* ---- Topbar -------------------------------------------------------
+   Original pages set .header to position:fixed with an arbitrary
+   width:83% (so it never lined up with anything). Force one model. */
+body.admin .header {
+    position: sticky !important;
+    top: 0;
+    left: auto !important;
+    right: auto !important;
+    z-index: 30;
+    margin-left: var(--sidebar-w) !important;
+    width: auto !important;
+    padding: 0 var(--space-5) !important;
+    min-height: var(--topbar-h);
+    height: var(--topbar-h);
+    background: var(--brand) !important;
+    box-shadow: var(--shadow-sm);
+}
+/* pages that pushed content down to clear the old fixed header no longer
+   need to — collapse that compensating padding */
+body.admin .dashboard { padding-top: var(--space-5) !important; }
+body.admin .dashboard:first-of-type { margin-top: var(--space-5) !important; }
+
+/* ---- Shared content offset + width ---------------------------------
+   One rule to line every content block up with the sidebar edge and give
+   it the same width. The [style] selectors defeat the old inline margins. */
+body.admin .dashboard-box-container1,
+body.admin .dashboard-box-container2,
+body.admin .dashboard,
+body.admin .contact,
+body.admin main,
+body.admin .main-content {
+    margin-left: var(--sidebar-w) !important;
+    margin-right: 0 !important;
+    width: auto !important;
+    box-sizing: border-box;
+}
+body.admin .dashboard-box-container1[style],
+body.admin .dashboard-box-container2[style] { margin-left: var(--sidebar-w) !important; }
+
+/* ---- Dashboard stat cards: equal responsive grid ------------------- */
+body.admin .dashboard-box-container1,
+body.admin .dashboard-box-container2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-5);
+    padding: var(--space-5);
+}
+body.admin .dashboard-box-container1 { margin-top: calc(var(--topbar-h) + var(--space-4)); }
+body.admin .dashboard-box-container2 { margin-top: 0 !important; padding-top: 0; }
+
+body.admin .dashboard-box1,
+body.admin .dashboard-box2 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    width: auto !important;
+    height: auto !important;
+    min-height: 148px;
+    margin: 0 !important;
+    padding: var(--space-5) !important;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+body.admin .dashboard-box1:hover,
+body.admin .dashboard-box2:hover { box-shadow: var(--shadow); transform: translateY(-2px); transition: .15s ease; }
+
+body.admin .dashboard-box1 i,
+body.admin .dashboard-box2 i {
+    font-size: 40px !important;
+    margin: 0 !important;
+    color: var(--brand);
+    background: var(--brand-50);
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    flex: none;
+}
+body.admin .box-title7 { margin: 0 !important; text-align: left; }
+body.admin .box-title7 p {
+    font-size: var(--fs-2xl) !important;
+    font-weight: 700;
+    margin: 0 0 2px !important;
+    color: var(--ink);
+}
+body.admin .box-title7 h3,
+body.admin .dashboard-box1 h3,
+body.admin .dashboard-box2 h3 {
+    font-size: var(--fs-sm) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--muted);
+    margin: 0 !important;
+}
+
+/* ---- Main list panels --------------------------------------------- */
+body.admin .dashboard {
+    margin-top: var(--space-5) !important;
+    margin-bottom: var(--space-5) !important;
+    padding: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+    max-width: 100%;
+}
+/* toolbar above each table wraps instead of pushing buttons off-screen */
+body.admin .heading-and-buttons {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    min-width: 0;
+}
+body.admin .title-with-icon1 button,
+body.admin .heading-and-buttons > button,
+body.admin .heading-and-buttons > a { white-space: nowrap; }
+/* very wide tables (many columns) scroll on their own, not the whole page */
+body.admin .dashboard > table { display: block; overflow-x: auto; }
+/* honour the left/right gutter without a wrapper element */
+body.admin .dashboard { margin-left: calc(var(--sidebar-w) + var(--space-5)) !important; margin-right: var(--space-5) !important; }
+body.admin .dashboard-box-container1,
+body.admin .dashboard-box-container2 { margin-left: var(--sidebar-w) !important; }
+
+/* ---- Kill the magic-number margins ------------------------------- */
+body.admin .navigation-buttons { align-items: center; gap: var(--space-3); }
+body.admin .navigation-buttons p { margin: 0 auto 0 0 !important; color: var(--muted); }
+body.admin .navigation-buttons .btn1 { margin-left: 0 !important; }
+body.admin .navigation-buttons .btn2 { margin-right: 0 !important; }
+body.admin .navigation-buttons button {
+    width: auto; min-width: 92px; height: 36px;
+    border: 1px solid var(--border); color: var(--muted); background: var(--surface);
+    border-radius: var(--radius-sm);
+}
+body.admin .navigation-buttons button:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+/* ---- Table header / toolbar ------------------------------------- */
+body.admin .heading-and-buttons { gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); }
+body.admin .title-with-icon1 { gap: var(--space-2); color: var(--ink); }
+body.admin .search-bar input { min-width: 220px; }
+
+/* ---- Action buttons in rows ----------------------------------- */
+body.admin .action-buttons .btnedit,
+body.admin .btnedit { background: var(--brand); color: #fff; border: 0; }
+body.admin .action-buttons .btnedit:hover,
+body.admin .btnedit:hover { background: var(--brand-600); color: #fff; }
+body.admin .btndelete { background: var(--danger); color: #fff; border: 0; }
+body.admin .btndelete:hover { filter: brightness(.95); }
+
+/* ---- Stat cards: one consistent look (was 6 pastel id-selectors) --- */
+body.admin #db1, body.admin #db2, body.admin #db3,
+body.admin #db4, body.admin #db5, body.admin #db6 {
+    background: var(--surface) !important;
+    position: relative;
+    overflow: hidden;
+}
+/* thin colour accent down the left edge keeps a little identity per tile */
+body.admin #db1::before, body.admin #db2::before, body.admin #db3::before,
+body.admin #db4::before, body.admin #db5::before, body.admin #db6::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+}
+body.admin #db1::before { background: var(--brand); }
+body.admin #db2::before { background: var(--success); }
+body.admin #db3::before { background: var(--accent); }
+body.admin #db4::before { background: var(--danger); }
+body.admin #db5::before { background: #7b61ff; }
+body.admin #db6::before { background: var(--warning); }
+
+/* the "More Info" footer bar inside each card */
+body.admin .dashboard-box1 .info,
+body.admin .dashboard-box2 .info,
+body.admin #db1 .info, body.admin #db2 .info, body.admin #db3 .info,
+body.admin #db4 .info, body.admin #db5 .info, body.admin #db6 .info {
+    position: static !important;
+    height: auto !important;
+    width: auto !important;
+    background: transparent !important;
+    margin-top: var(--space-2);
+}
+body.admin .dashboard-box1 .info a,
+body.admin .dashboard-box2 .info a {
+    color: var(--brand) !important;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+}
+body.admin .dashboard-box1 .info a:hover,
+body.admin .dashboard-box2 .info a:hover { text-decoration: underline; }
+
+/* the decorative oversized background icon wrapper */
+body.admin .dashboard-box1 .i,
+body.admin .dashboard-box2 .i {
+    position: static !important;
+    margin: 0 0 0 auto !important;
+    top: auto !important; left: auto !important; transform: none !important;
+    font-size: 0 !important;
+    order: 2;
+}
+
+/* ---- Panel section titles (were wrapping one word per line) ------ */
+body.admin .title-with-icon1 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    margin-bottom: var(--space-2);
+}
+body.admin .title-with-icon1 h3,
+body.admin .dashboard > h3,
+body.admin [id$="Dashboard"] > h3 {
+    white-space: nowrap;
+    font-size: var(--fs-lg);
+    margin: 0;
+    flex: 0 0 auto;
+}
+body.admin .title-with-icon1 i { font-size: 18px; color: var(--brand); }
+body.admin .title-with-icon1 button {
+    margin-left: auto;
+    background: var(--success);
+    color: #fff;
+    border: 0;
+}
+
+/* ---- Sidebar brand block --------------------------------------- */
+body.admin .navigation .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: auto;
+    margin: 0;
+    padding: 0 var(--space-4) var(--space-4);
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+}
+body.admin .navigation .logo img {
+    width: 40px; height: 40px;
+    margin: 0 !important;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    flex: none;
+}
+body.admin .navigation .logo p {
+    margin: 0 !important;
+    font-size: var(--fs-md);
+    line-height: 1.2;
+    color: #fff;
+}
+
+/* ---- Topbar profile area ------------------------------------- */
+body.admin .header .picfetch { align-items: center; margin: 0; gap: var(--space-2); }
+body.admin .header .picfetch img { width: 38px; height: 38px; margin: 0; border: 2px solid rgba(255,255,255,.6); }
+body.admin .header .picfetch .p,
+body.admin .header .adminname,
+body.admin .header .profile { color: #fff; margin: 0; }
+body.admin .header * { color: #fff; }
+
+/* ---- "Show entries" number box -------------------------------- */
+body.admin .show-entries input { width: 64px; text-align: center; }
+
+/* ---- Sub-header "breadcrumb" bar (was <div class="title-with-icon"
+       style="margin-left:269px"> overlapping the topbar) ------------- */
+body.admin .title-with-icon {
+    position: static !important;      /* was position:fixed; top:85px */
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 0 0 var(--sidebar-w) !important;
+    padding: var(--space-4) var(--space-5) !important;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: none !important;
+    z-index: 1 !important;
+}
+body.admin .title-with-icon p {
+    margin: 0;
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    color: var(--ink);
+}
+body.admin .title-with-icon a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px !important;
+    height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--border) !important;   /* was 2px solid #DAA520 */
+    border-radius: var(--radius-sm);
+    color: var(--brand);
+}
+body.admin .title-with-icon a:hover { background: var(--brand-50); }
+body.admin .title-with-icon a i { color: var(--brand); margin: 0; }
+
+/* Any element that still carries a hard-coded left margin ~ old header
+   width gets snapped to the real sidebar width. */
+body.admin [style*="margin-left: 269px"],
+body.admin [style*="margin-left:269px"],
+body.admin [style*="margin-left: 288px"],
+body.admin [style*="margin-left: 285px"],
+body.admin [style*="margin-left: 250px"] {
+    margin-left: var(--sidebar-w) !important;
+}
+
+/* Keep the topbar a fixed height regardless of the profile photo size */
+body.admin .header > * { max-height: var(--topbar-h); }
+body.admin .header img { width: 36px !important; height: 36px !important; }
+body.admin .header .profile-details-container img { width: 64px !important; height: 64px !important; max-height: none; }
+
+/* ---- Small screens: sidebar collapses, content is full width --- */
+@media (max-width: 992px) {
+    body.admin .navigation { width: 0; overflow: hidden; }
+    body.admin .header,
+    body.admin .dashboard,
+    body.admin .dashboard-box-container1,
+    body.admin .dashboard-box-container2 {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    body.admin .dashboard { border-radius: 0; }
+}

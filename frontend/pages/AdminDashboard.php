@@ -26,8 +26,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.1.7/sweetalert2.min.css">
   <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/AdminDashboard.css">
+  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/admin-theme.css">
 </head>
-<body>
+<body class="admin">
     <div>
     <div class="header">
       <div class="picfetch">

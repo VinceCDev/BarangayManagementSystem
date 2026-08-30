@@ -19,8 +19,9 @@
         margin-top: -270px
     }
     </style>
-  </head> 
-<body>
+    <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css"><link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/public-theme.css">
+</head> 
+<body class="public">
     <header class="header"> 
         <a href="#" class="logo">
             <img src="/BarangayManagementSystem-main/frontend/assets/images/logo1.png" alt="Error Image" height="60px" width="60px"/>

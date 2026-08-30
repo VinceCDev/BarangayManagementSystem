@@ -65,6 +65,7 @@
       background-color: #ffa000;
     }
   </style>
+  <link rel="stylesheet" href="/BarangayManagementSystem-main/frontend/assets/css/theme.css">
 </head>
 <body>
     <div class="background-box"></div>

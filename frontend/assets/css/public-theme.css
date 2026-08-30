@@ -1,0 +1,63 @@
+/* ==========================================================================
+   public-theme.css — polish for the public-facing site (top navbar layout)
+   --------------------------------------------------------------------------
+   Loaded only on pages with <body class="public">, after theme.css and the
+   page stylesheet. Re-tints the header, buttons, cards and section rhythm
+   onto the shared palette without changing the page layout.
+   ========================================================================== */
+
+body.public .header,
+body.public header.header {
+    background: var(--brand);
+    box-shadow: var(--shadow-sm);
+}
+body.public .navigation a,
+body.public nav.navigation a { color: #fff; }
+body.public .navigation a:hover { color: var(--brand-100); }
+
+body.public .dropdown-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+}
+body.public .dropdown-content a { color: var(--ink); }
+body.public .dropdown-content a:hover { background: var(--brand-50); color: var(--brand-700); }
+
+/* Consistent section spacing (was a grab-bag of ad-hoc paddings) */
+body.public section {
+    padding-top: var(--space-7);
+    padding-bottom: var(--space-7);
+}
+
+/* Cards / stat tiles on the landing + info pages */
+body.public .card,
+body.public .icon-circle,
+body.public .eco4 > div {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+body.public .icon-circle { color: var(--brand); background: var(--brand-50); border-color: var(--brand-100); }
+
+/* Primary call-to-action buttons */
+body.public .btn-primary,
+body.public .home a.btn,
+body.public button.cta {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    padding: 10px 22px;
+}
+body.public .btn-primary:hover { background: var(--brand-600); border-color: var(--brand-600); }
+
+body.public h1 { font-size: var(--fs-2xl); }
+body.public h2 { font-size: var(--fs-xl); }
+
+body.public .footer,
+body.public footer {
+    background: #16202e;
+    color: #c9d2df;
+}
+body.public .footer a { color: #fff; }
