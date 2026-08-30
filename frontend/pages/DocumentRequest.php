@@ -56,6 +56,7 @@ require __DIR__ . '/../partials/admin_top.php';
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
                    placeholder="Search requester, purpose, email…">
         </div>
+        <span class="spacer"></span>
         <?= filter_select('cert', (string) $fCert, ['' => 'All certificates'] + $certOptions) ?>
         <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
         <?php if ($search || $fCert): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>

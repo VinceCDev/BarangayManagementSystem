@@ -59,6 +59,7 @@ require __DIR__ . '/../partials/admin_top.php';
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
                    placeholder="Search by name…">
         </div>
+        <span class="spacer"></span>
         <?= filter_select('status', $fStatus, ['' => 'All civil status'] + array_combine($civilStatus, $civilStatus)) ?>
         <?= filter_select('gender', $fGender, ['' => 'All genders'] + array_combine($genders, $genders)) ?>
         <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>

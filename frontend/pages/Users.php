@@ -52,6 +52,7 @@ require __DIR__ . '/../partials/admin_top.php';
             <i class="bi bi-search"></i>
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search name or username…">
         </div>
+        <span class="spacer"></span>
         <?= filter_select('role', $fRole, ['' => 'All roles'] + $types) ?>
         <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
         <?php if ($search || $fRole): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>

@@ -142,7 +142,7 @@ function render_pager(int $page, int $pages, int $total, array $query = [], int 
         $end   = min($pages, $start + 4);
         $start = max(1, $end - 4);
 
-        $items  = $link($page - 1, '&laquo;', $page <= 1);
+        $items  = $link($page - 1, '&lsaquo;', $page <= 1);
         if ($start > 1) {
             $items .= $link(1, '1');
             if ($start > 2) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
@@ -154,7 +154,7 @@ function render_pager(int $page, int $pages, int $total, array $query = [], int 
             if ($end < $pages - 1) $items .= '<li class="page-item disabled"><span class="page-link">…</span></li>';
             $items .= $link($pages, (string) $pages);
         }
-        $items .= $link($page + 1, '&raquo;', $page >= $pages);
+        $items .= $link($page + 1, '&rsaquo;', $page >= $pages);
 
         $nav = '<nav aria-label="Pagination"><ul class="pagination pagination-sm mb-0">' . $items . '</ul></nav>';
     }

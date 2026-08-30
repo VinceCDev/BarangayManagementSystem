@@ -63,6 +63,7 @@ require __DIR__ . '/../partials/admin_top.php';
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>"
                    placeholder="Search complainant or respondent…">
         </div>
+        <span class="spacer"></span>
         <?= filter_select('status', $fStatus, ['' => 'All statuses'] + array_combine($statuses, $statuses)) ?>
         <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
         <?php if ($search || $fStatus): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>

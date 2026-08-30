@@ -54,6 +54,7 @@ require __DIR__ . '/../partials/admin_top.php';
             <i class="bi bi-search"></i>
             <input type="text" class="form-control" name="search" value="<?= e($search) ?>" placeholder="Search name…">
         </div>
+        <span class="spacer"></span>
         <?= filter_select('position', $fPosition, ['' => 'All positions'] + array_combine($positions, $positions)) ?>
         <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
         <?php if ($search || $fPosition): ?><a class="btn btn-sm btn-outline-secondary" href="?">Reset</a><?php endif; ?>
